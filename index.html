@@ -457,27 +457,19 @@
             if (!dot || !card) return false;
             dot.className = 'status-dot checking';
             try {
-                let isUp = false;
-                // Native TCP Check — KEIN HTTP, kein CORS, kein WebView Bug!
-                if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.PortCheck) {
-                    const res = await Capacitor.Plugins.PortCheck.check({
-                        host: currentIp,
-                        port: s.port,
-                        timeout: 4000
-                    });
-                    isUp = res.open;
-                } else {
-                    // Browser Fallback
-                    const ctrl = new AbortController();
-                    const t = setTimeout(() => ctrl.abort(), 4000);
-                    await fetch(`http://${currentIp}:${s.port}/`, { signal: ctrl.signal });
-                    clearTimeout(t);
-                    isUp = true;
-                }
-                dot.className = isUp ? 'status-dot up' : 'status-dot down';
-                if (isUp) card.classList.remove('offline');
-                else card.classList.add('offline');
-                return isUp;
+                const ctrl = new AbortController();
+                const t = setTimeout(() => ctrl.abort(), 5000);
+                // Echter HTTP-Check — mixedContentMode="always" erlaubt es!
+                await fetch(`http://${currentIp}:${s.port}/`, {
+                    signal: ctrl.signal,
+                    mode: 'cors',
+                    cache: 'no-store',
+                    credentials: 'omit'
+                });
+                clearTimeout(t);
+                dot.className = 'status-dot up';
+                card.classList.remove('offline');
+                return true;
             } catch {
                 dot.className = 'status-dot down';
                 card.classList.add('offline');
