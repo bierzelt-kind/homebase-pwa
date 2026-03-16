@@ -8,7 +8,7 @@
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #000; color: #fff; min-height: 100vh; }
-        :root { --orange: #ff9000; --dark: #000; --card: #1a1a1a; --border: #333; --mono: 'SF Mono', 'Fira Code', monospace; }
+        :root { --orange: #ff9000; --dark: #000; --card: #1a1a1a; --border: #333; --mono: 'SF Mono', 'Fira Code', monospace; --danger: #e74c3c; }
         .safe-top { height: env(safe-area-inset-top, 20px); }
         .safe-bottom { height: max(env(safe-area-inset-bottom, 16px), 16px); }
 
@@ -32,25 +32,32 @@
         .app { display: none; background: #000; min-height: 100vh; }
         .header { padding: 16px 20px 12px; display: flex; align-items: center; justify-content: space-between; }
         .header h1 { font-size: 24px; font-weight: 900; }
-        .header h1 .hub { background: var(--orange); color: #000; padding: 1px 8px; border-radius: 5px; font-style: italic; }
-        .header .settings-btn { background: none; border: 2px solid #444; color: #fff; font-size: 18px; cursor: pointer; padding: 6px 10px; border-radius: 8px; transition: .15s; }
-        .header .settings-btn:active { border-color: var(--orange); color: var(--orange); }
+        .header h1 .hub { background: var(--orange); color: #000; padding: 1px 8px; border-radius: 5px; font-style: normal; }
+        .header-actions { display: flex; gap: 8px; }
+        .header-actions button { background: none; border: 2px solid #444; color: #fff; font-size: 18px; cursor: pointer; padding: 6px 10px; border-radius: 8px; transition: .15s; }
+        .header-actions button:active { border-color: var(--orange); color: var(--orange); }
         .ip-switch { display: flex; gap: 8px; padding: 0 20px; margin-bottom: 8px; }
         .ip-switch button { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px; color: #fff; font-size: 12px; cursor: pointer; transition: .15s; }
         .ip-switch button.active { border-color: var(--orange); background: rgba(255,144,0,.15); }
         .ip-switch button .ip-label { font-weight: 700; display: block; margin-bottom: 2px; }
         .ip-switch button .ip-value { font-family: var(--mono); font-size: 11px; color: #888; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px 20px; }
-        .service-card { background: var(--card); border-radius: 14px; padding: 16px 18px; display: flex; align-items: center; cursor: pointer; transition: .15s; border-left: 4px solid transparent; }
+        .service-card { background: var(--card); border-radius: 14px; padding: 16px 18px; display: flex; align-items: center; cursor: pointer; transition: .15s; border-left: 4px solid transparent; position: relative; }
         .service-card:active { transform: scale(.97); }
         .service-name { font-size: 14px; font-weight: 700; }
         .service-url { font-size: 12px; color: #666; font-family: var(--mono); }
         .status-dot { width: 12px; height: 12px; border-radius: 50%; background: #333; flex-shrink: 0; margin-left: auto; }
+        .card-icon { font-size: 32px; margin-right: 12px; }
+        .card-img { width: 32px; height: 32px; object-fit: cover; border-radius: 6px; margin-right: 12px; }
 
-        /* ===== SETTINGS MODAL ===== */
+        /* ===== ADD SERVICE FAB ===== */
+        .fab { position: fixed; bottom: 30px; right: 20px; width: 56px; height: 56px; background: var(--orange); color: #000; border: none; border-radius: 50%; font-size: 28px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 20px rgba(255,144,0,.4); z-index: 50; transition: .15s; }
+        .fab:active { transform: scale(.9); }
+
+        /* ===== MODAL OVERLAY ===== */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.85); z-index: 100; overflow-y: auto; padding: 20px; }
         .modal-overlay.show { display: block; }
-        .modal { background: #111; border: 2px solid var(--orange); border-radius: 16px; max-width: 420px; margin: 20px auto; padding: 24px; }
+        .modal { background: #111; border: 2px solid var(--orange); border-radius: 16px; max-width: 420px; margin: 20px auto; padding: 24px; position: relative; }
         .modal h2 { font-size: 20px; font-weight: 900; margin-bottom: 20px; color: var(--orange); text-align: center; }
         .modal .close-btn { position: absolute; top: 12px; right: 16px; background: none; border: none; color: #fff; font-size: 28px; cursor: pointer; }
         .modal .section-title { font-size: 13px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 10px; border-bottom: 1px solid #333; padding-bottom: 6px; }
@@ -62,24 +69,47 @@
         .modal .service-row .toggle .slider:before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: .2s; }
         .modal .service-row .toggle input:checked + .slider { background: var(--orange); }
         .modal .service-row .toggle input:checked + .slider:before { transform: translateX(20px); }
+        .modal .service-row .srv-icon { font-size: 24px; flex-shrink: 0; cursor: pointer; }
         .modal .service-row .srv-name { flex: 1; font-weight: 600; font-size: 14px; }
         .modal .service-row .port-input { width: 70px; background: #000; border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; color: var(--orange); font-family: var(--mono); font-size: 13px; text-align: center; outline: none; }
         .modal .service-row .port-input:focus { border-color: var(--orange); }
-        .modal .reset-btn { width: 100%; background: none; border: 2px solid #c0392b; color: #c0392b; border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 24px; transition: .15s; }
-        .modal .reset-btn:active { background: rgba(192,57,43,.15); }
-        .modal .save-btn { width: 100%; background: var(--orange); color: #000; border: none; border-radius: 12px; padding: 14px; font-size: 16px; font-weight: 800; cursor: pointer; margin-top: 12px; transition: .15s; }
-        .modal .save-btn:active { transform: scale(.97); opacity: .8; }
-
+        .modal .service-row .delete-btn { background: none; border: none; color: var(--danger); font-size: 18px; cursor: pointer; padding: 4px; flex-shrink: 0; }
         .modal .ip-field { margin-bottom: 14px; }
         .modal .ip-field label { display: block; font-size: 12px; color: #888; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
         .modal .ip-field input { width: 100%; background: #000; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; color: #fff; font-family: var(--mono); font-size: 14px; outline: none; }
         .modal .ip-field input:focus { border-color: var(--orange); }
+        .modal .input-field { margin-bottom: 14px; }
+        .modal .input-field label { display: block; font-size: 12px; color: #888; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+        .modal .input-field input { width: 100%; background: #000; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; color: #fff; font-family: var(--mono); font-size: 14px; outline: none; }
+        .modal .input-field input:focus { border-color: var(--orange); }
+        .modal .save-btn { width: 100%; background: var(--orange); color: #000; border: none; border-radius: 12px; padding: 14px; font-size: 16px; font-weight: 800; cursor: pointer; margin-top: 12px; transition: .15s; }
+        .modal .save-btn:active { transform: scale(.97); opacity: .8; }
+        .modal .reset-btn { width: 100%; background: none; border: 2px solid var(--danger); color: var(--danger); border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 16px; transition: .15s; }
+        .modal .reset-btn:active { background: rgba(231,76,60,.15); }
+
+        /* ===== ICON PICKER ===== */
+        .icon-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; padding: 8px 0; }
+        .icon-grid .icon-btn { font-size: 24px; background: #222; border: 2px solid transparent; border-radius: 8px; padding: 8px; cursor: pointer; transition: .15s; text-align: center; }
+        .icon-grid .icon-btn:active, .icon-grid .icon-btn.selected { border-color: var(--orange); background: rgba(255,144,0,.1); }
+        .image-preview { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+        .image-preview img { width: 48px; height: 48px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
+        .image-preview .remove-img { background: none; border: none; color: var(--danger); font-size: 14px; cursor: pointer; }
+
+        /* ===== COLOR PICKER ===== */
+        .color-row { display: flex; gap: 8px; flex-wrap: wrap; padding: 8px 0; }
+        .color-btn { width: 32px; height: 32px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; transition: .15s; }
+        .color-btn:active, .color-btn.selected { border-color: #fff; transform: scale(1.2); }
+
+        /* ===== DELETE MODE ===== */
+        .grid.delete-mode .service-card { animation: wiggle 0.3s infinite alternate; }
+        @keyframes wiggle { 0% { transform: rotate(-1deg); } 100% { transform: rotate(1deg); } }
+        .grid.delete-mode .service-card::after { content: '✕'; position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; background: var(--danger); color: #fff; border-radius: 50%; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
 <body>
     <div class="safe-top"></div>
 
-    <!-- ===== ONBOARDING SCREEN ===== -->
+    <!-- ONBOARDING -->
     <div class="onboarding" id="onboarding">
         <div class="big-logo">🎬</div>
         <h1>Jelly<span class="hub">Hub</span></h1>
@@ -94,17 +124,20 @@
             <div class="field">
                 <label>🌐 Öffentliche IP / Domain</label>
                 <input type="text" id="setup-public-ip" placeholder="meine.duckdns.org" inputmode="url">
-                <div class="hint">Von unterwegs erreichbar (DynDNS, feste IP, etc.)</div>
+                <div class="hint">Von unterwegs erreichbar</div>
             </div>
             <button class="start-btn" onclick="finishSetup()">🚀 Los geht's!</button>
         </div>
     </div>
 
-    <!-- ===== MAIN APP ===== -->
+    <!-- MAIN APP -->
     <div class="app" id="app">
         <div class="header">
             <h1>🎬 Jelly<span class="hub">Hub</span></h1>
-            <button class="settings-btn" onclick="openSettings()" title="Einstellungen">⚙️</button>
+            <div class="header-actions">
+                <button onclick="toggleDeleteMode()" id="delete-mode-btn" title="Services entfernen">🗑️</button>
+                <button onclick="openSettings()" title="Einstellungen">⚙️</button>
+            </div>
         </div>
         <div class="ip-switch">
             <button id="btn-home" onclick="switchIp('home')" class="active">
@@ -117,15 +150,15 @@
             </button>
         </div>
         <div class="grid" id="grid"></div>
+        <button class="fab" onclick="openAddService()" title="Service hinzufügen">+</button>
         <div class="safe-bottom"></div>
     </div>
 
-    <!-- ===== SETTINGS MODAL ===== -->
+    <!-- SETTINGS MODAL -->
     <div class="modal-overlay" id="settings-overlay">
         <div class="modal" style="position:relative;">
             <button class="close-btn" onclick="closeSettings()">✕</button>
             <h2>⚙️ Einstellungen</h2>
-
             <div class="section-title">🌐 IP / Domain</div>
             <div class="ip-field">
                 <label>🏠 Home IP</label>
@@ -135,27 +168,70 @@
                 <label>🌐 Öffentliche IP</label>
                 <input type="text" id="set-public-ip" placeholder="meine.duckdns.org" inputmode="url">
             </div>
-
-            <div class="section-title">🔧 Services</div>
+            <div class="section-title">🔧 Services bearbeiten</div>
             <div id="settings-services"></div>
-
             <button class="save-btn" onclick="saveSettings()">💾 Speichern</button>
             <button class="reset-btn" onclick="resetAll()">🗑️ Alles zurücksetzen</button>
         </div>
     </div>
 
+    <!-- ADD SERVICE MODAL -->
+    <div class="modal-overlay" id="add-overlay">
+        <div class="modal" style="position:relative;">
+            <button class="close-btn" onclick="closeAddService()">✕</button>
+            <h2>➕ Neuer Service</h2>
+            <div class="input-field">
+                <label>📛 Name</label>
+                <input type="text" id="add-name" placeholder="z.B. Pi-hole">
+            </div>
+            <div class="input-field">
+                <label>🔌 Port</label>
+                <input type="number" id="add-port" placeholder="8080" inputmode="numeric">
+            </div>
+            <div class="input-field">
+                <label>🌐 Protokoll</label>
+                <div style="display:flex;gap:8px;">
+                    <button onclick="setProto('http')" id="proto-http" style="flex:1;padding:10px;background:var(--orange);color:#000;border:none;border-radius:8px;font-weight:700;cursor:pointer;">http://</button>
+                    <button onclick="setProto('https')" id="proto-https" style="flex:1;padding:10px;background:#333;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;">https://</button>
+                </div>
+            </div>
+            <div class="section-title">🎨 Farbe</div>
+            <div class="color-row" id="color-row"></div>
+            <div class="section-title">🎯 Icon wählen</div>
+            <div class="icon-grid" id="icon-grid"></div>
+            <div class="section-title">📷 Oder eigenes Bild</div>
+            <div class="input-field">
+                <input type="file" id="add-image" accept="image/*" onchange="handleImageUpload(event)">
+            </div>
+            <div class="image-preview" id="image-preview" style="display:none;">
+                <img id="preview-img" src="">
+                <button class="remove-img" onclick="removeImage()">✕ Entfernen</button>
+            </div>
+            <button class="save-btn" onclick="addNewService()">🚀 Hinzufügen</button>
+        </div>
+    </div>
+
     <script>
+        // ===== ICONS & COLORS =====
+        const icons = ['🏠','🛡️','📡','📊','☁️','🎬','🎮','💾','🖥️','📹','🔔','💡','🌡️','🔒','🔑','📁','🖨️','⚡','🌐','📧','💬','🎵','📺','🎯','🧪','🔬','🤖','🛠️','📦','⏰','🔋','🗺️'];
+        const colors = ['#41bdf5','#67b279','#00b5e2','#5cdd8b','#0082c9','#ff9000','#e74c3c','#9b59b6','#f39c12','#1abc9c','#e91e63','#3f51b5','#ff5722','#607d8b','#795548','#009688'];
+        let selectedIcon = '🏠';
+        let selectedColor = '#ff9000';
+        let newServiceProto = 'http';
+        let newServiceImage = null;
+
         // ===== DEFAULT SERVICES =====
         const defaultServices = [
-            { id: 'ha',       name: 'HomeAssistant', port: 8123,  icon: '🏠', color: '#41bdf5', enabled: true },
-            { id: 'adguard',  name: 'AdGuard',       port: 3000,  icon: '🛡️', color: '#67b279', enabled: true },
-            { id: 'openwrt',  name: 'OpenWrt',       port: 80,    icon: '📡', color: '#00b5e2', enabled: true },
-            { id: 'uptime',   name: 'UptimeKuma',    port: 3001,  icon: '📊', color: '#5cdd8b', enabled: true },
-            { id: 'nextcloud',name: 'Nextcloud',     port: 443,   icon: '☁️', color: '#0082c9', enabled: true },
-            { id: 'jellyhub', name: 'JellyHub',      port: 8096,  icon: '🎬', color: '#ff9000', enabled: true },
+            { id: 'ha',       name: 'HomeAssistant', port: 8123,  icon: '🏠', color: '#41bdf5', enabled: true, proto: 'http' },
+            { id: 'adguard',  name: 'AdGuard',       port: 3000,  icon: '🛡️', color: '#67b279', enabled: true, proto: 'http' },
+            { id: 'openwrt',  name: 'OpenWrt',       port: 80,    icon: '📡', color: '#00b5e2', enabled: true, proto: 'http' },
+            { id: 'uptime',   name: 'UptimeKuma',    port: 3001,  icon: '📊', color: '#5cdd8b', enabled: true, proto: 'http' },
+            { id: 'nextcloud',name: 'Nextcloud',     port: 443,   icon: '☁️', color: '#0082c9', enabled: true, proto: 'https' },
+            { id: 'jellyhub', name: 'JellyHub',      port: 8096,  icon: '🎬', color: '#ff9000', enabled: true, proto: 'http', special: true },
         ];
 
         let currentMode = 'home';
+        let deleteMode = false;
 
         // ===== CONFIG =====
         function getConfig() {
@@ -166,14 +242,12 @@
                 services: JSON.parse(localStorage.getItem('hd-services') || 'null') || defaultServices
             };
         }
-
         function saveConfig(cfg) {
             localStorage.setItem('hd-home-ip', cfg.homeIp);
             localStorage.setItem('hd-public-ip', cfg.publicIp);
             localStorage.setItem('hd-setup-done', 'true');
             localStorage.setItem('hd-services', JSON.stringify(cfg.services));
         }
-
         function getActiveIp() {
             const cfg = getConfig();
             return currentMode === 'home' ? cfg.homeIp : cfg.publicIp;
@@ -202,8 +276,9 @@
 
         // ===== CARDS =====
         function openService(s) {
+            if (deleteMode) return;
             const ip = getActiveIp();
-            const proto = s.port === 443 ? 'https' : 'http';
+            const proto = s.proto || (s.port === 443 ? 'https' : 'http');
             window.open(`${proto}://${ip}:${s.port}`, '_blank');
         }
 
@@ -213,30 +288,141 @@
             const grid = document.getElementById('grid');
             grid.innerHTML = '';
             const enabledServices = cfg.services.filter(s => s.enabled !== false);
-            enabledServices.forEach(s => {
+            enabledServices.forEach((s, idx) => {
                 const card = document.createElement('div');
                 card.className = 'service-card';
-                if (s.id === 'jellyhub') {
+                if (s.special || s.id === 'jellyhub') {
                     card.style.background = '#000';
                     card.style.border = '2px solid var(--orange)';
+                    const iconHtml = s.image ? `<img class="card-img" src="${s.image}" alt="">` : `<span class="card-icon">${s.icon || '🔌'}</span>`;
                     card.innerHTML = `
-                        <div class="service-info">
-                            <div class="service-name" style="color:var(--orange);font-weight:900;font-style:italic;">Jelly<span style="background:var(--orange);color:#000;padding:1px 6px;border-radius:4px;margin-left:2px;font-style:normal;">Hub</span></div>
-                            <div class="service-url">${ip}:${s.port}</div>
+                        <div class="service-info" style="display:flex;align-items:center;">
+                            ${iconHtml}
+                            <div>
+                                <div class="service-name" style="color:var(--orange);font-weight:900;font-style:italic;">Jelly<span style="background:var(--orange);color:#000;padding:1px 6px;border-radius:4px;margin-left:2px;font-style:normal;">Hub</span></div>
+                                <div class="service-url">${ip}:${s.port}</div>
+                            </div>
                         </div>
                         <div class="status-dot"></div>`;
                 } else {
-                    card.style.borderLeftColor = s.color;
+                    card.style.borderLeftColor = s.color || '#ff9000';
+                    const iconHtml = s.image ? `<img class="card-img" src="${s.image}" alt="">` : `<span class="card-icon">${s.icon || '🔌'}</span>`;
                     card.innerHTML = `
-                        <div class="service-info">
-                            <div class="service-name">${s.icon} ${s.name}</div>
-                            <div class="service-url">${ip}:${s.port}</div>
+                        <div class="service-info" style="display:flex;align-items:center;">
+                            ${iconHtml}
+                            <div>
+                                <div class="service-name">${s.name}</div>
+                                <div class="service-url">${ip}:${s.port}</div>
+                            </div>
                         </div>
                         <div class="status-dot"></div>`;
                 }
-                card.onclick = () => openService(s);
+                card.onclick = () => {
+                    if (deleteMode) {
+                        deleteService(s.id);
+                    } else {
+                        openService(s);
+                    }
+                };
                 grid.appendChild(card);
             });
+            grid.className = 'grid' + (deleteMode ? ' delete-mode' : '');
+        }
+
+        // ===== DELETE MODE =====
+        function toggleDeleteMode() {
+            deleteMode = !deleteMode;
+            document.getElementById('delete-mode-btn').style.borderColor = deleteMode ? '#e74c3c' : '#444';
+            document.getElementById('delete-mode-btn').style.color = deleteMode ? '#e74c3c' : '#fff';
+            renderCards();
+        }
+        function deleteService(id) {
+            const cfg = getConfig();
+            if (!confirm('Service wirklich entfernen?')) return;
+            cfg.services = cfg.services.filter(s => s.id !== id);
+            saveConfig(cfg);
+            renderCards();
+        }
+
+        // ===== ADD SERVICE =====
+        function openAddService() {
+            if (deleteMode) { toggleDeleteMode(); return; }
+            selectedIcon = '🏠';
+            selectedColor = '#ff9000';
+            newServiceProto = 'http';
+            newServiceImage = null;
+            document.getElementById('add-name').value = '';
+            document.getElementById('add-port').value = '';
+            document.getElementById('proto-http').style.background = 'var(--orange)';
+            document.getElementById('proto-http').style.color = '#000';
+            document.getElementById('proto-https').style.background = '#333';
+            document.getElementById('proto-https').style.color = '#fff';
+            document.getElementById('image-preview').style.display = 'none';
+            document.getElementById('add-image').value = '';
+            renderIconGrid();
+            renderColorRow();
+            document.getElementById('add-overlay').classList.add('show');
+        }
+        function closeAddService() { document.getElementById('add-overlay').classList.remove('show'); }
+        function setProto(p) {
+            newServiceProto = p;
+            document.getElementById('proto-http').style.background = p === 'http' ? 'var(--orange)' : '#333';
+            document.getElementById('proto-http').style.color = p === 'http' ? '#000' : '#fff';
+            document.getElementById('proto-https').style.background = p === 'https' ? 'var(--orange)' : '#333';
+            document.getElementById('proto-https').style.color = p === 'https' ? '#000' : '#fff';
+        }
+        function renderIconGrid() {
+            const grid = document.getElementById('icon-grid');
+            grid.innerHTML = '';
+            icons.forEach(i => {
+                const btn = document.createElement('div');
+                btn.className = 'icon-btn' + (i === selectedIcon ? ' selected' : '');
+                btn.textContent = i;
+                btn.onclick = () => { selectedIcon = i; renderIconGrid(); };
+                grid.appendChild(btn);
+            });
+        }
+        function renderColorRow() {
+            const row = document.getElementById('color-row');
+            row.innerHTML = '';
+            colors.forEach(c => {
+                const btn = document.createElement('div');
+                btn.className = 'color-btn' + (c === selectedColor ? ' selected' : '');
+                btn.style.background = c;
+                btn.onclick = () => { selectedColor = c; renderColorRow(); };
+                row.appendChild(btn);
+            });
+        }
+        function handleImageUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                newServiceImage = ev.target.result;
+                document.getElementById('preview-img').src = newServiceImage;
+                document.getElementById('image-preview').style.display = 'flex';
+                selectedIcon = '🔌'; // reset emoji when using image
+            };
+            reader.readAsDataURL(file);
+        }
+        function removeImage() {
+            newServiceImage = null;
+            document.getElementById('image-preview').style.display = 'none';
+            document.getElementById('add-image').value = '';
+        }
+        function addNewService() {
+            const name = document.getElementById('add-name').value.trim();
+            const port = parseInt(document.getElementById('add-port').value);
+            if (!name) { alert('Bitte Name eingeben!'); return; }
+            if (!port || port < 1 || port > 65535) { alert('Bitte gültigen Port eingeben (1-65535)!'); return; }
+            const cfg = getConfig();
+            const id = 'srv_' + Date.now();
+            const newSrv = { id, name, port, icon: selectedIcon, color: selectedColor, enabled: true, proto: newServiceProto };
+            if (newServiceImage) newSrv.image = newServiceImage;
+            cfg.services.push(newSrv);
+            saveConfig(cfg);
+            closeAddService();
+            renderCards();
         }
 
         // ===== SETTINGS =====
@@ -249,22 +435,20 @@
             cfg.services.forEach((s, i) => {
                 const row = document.createElement('div');
                 row.className = 'service-row';
+                const iconHtml = s.image ? `<img class="card-img" src="${s.image}" style="width:24px;height:24px;">` : '';
                 row.innerHTML = `
                     <label class="toggle">
                         <input type="checkbox" data-idx="${i}" ${s.enabled !== false ? 'checked' : ''} onchange="toggleService(this)">
                         <span class="slider"></span>
                     </label>
-                    <span class="srv-name">${s.icon} ${s.name}</span>
+                    ${iconHtml || `<span class="srv-icon">${s.icon || '🔌'}</span>`}
+                    <span class="srv-name">${s.name}</span>
                     <input type="number" class="port-input" value="${s.port}" data-idx="${i}" onchange="updatePort(this)">`;
                 container.appendChild(row);
             });
             document.getElementById('settings-overlay').classList.add('show');
         }
-
-        function closeSettings() {
-            document.getElementById('settings-overlay').classList.remove('show');
-        }
-
+        function closeSettings() { document.getElementById('settings-overlay').classList.remove('show'); }
         function toggleService(el) {
             const cfg = getConfig();
             const idx = parseInt(el.dataset.idx);
@@ -272,7 +456,6 @@
             saveConfig(cfg);
             renderCards();
         }
-
         function updatePort(el) {
             const cfg = getConfig();
             const idx = parseInt(el.dataset.idx);
@@ -280,19 +463,16 @@
             saveConfig(cfg);
             renderCards();
         }
-
         function saveSettings() {
             const cfg = getConfig();
             cfg.homeIp = document.getElementById('set-home-ip').value.trim();
             cfg.publicIp = document.getElementById('set-public-ip').value.trim() || cfg.homeIp;
-            // Ports & toggles already saved via onChange
             saveConfig(cfg);
             document.getElementById('display-home-ip').textContent = cfg.homeIp;
             document.getElementById('display-public-ip').textContent = cfg.publicIp;
             renderCards();
             closeSettings();
         }
-
         function resetAll() {
             if (confirm('Wirklich ALLE Einstellungen zurücksetzen?')) {
                 localStorage.clear();
@@ -309,18 +489,12 @@
             document.getElementById('app').style.display = 'block';
             renderCards();
         }
-
         document.addEventListener('DOMContentLoaded', () => {
             const cfg = getConfig();
-            if (cfg.setupDone) {
-                showApp();
-            }
+            if (cfg.setupDone) showApp();
         });
-
-        // Close modal on overlay click
-        document.getElementById('settings-overlay').addEventListener('click', function(e) {
-            if (e.target === this) closeSettings();
-        });
+        document.getElementById('settings-overlay').addEventListener('click', function(e) { if (e.target === this) closeSettings(); });
+        document.getElementById('add-overlay').addEventListener('click', function(e) { if (e.target === this) closeAddService(); });
     </script>
 </body>
 </html>
