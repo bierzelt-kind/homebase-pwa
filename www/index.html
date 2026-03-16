@@ -457,23 +457,21 @@
             if (!dot || !card) return false;
             dot.className = 'status-dot checking';
             try {
-                // Native HTTP via @capacitor-community/http — kein WebView/CORS!
-                if (window.Capacitor && window.Capacitor.Plugins.Http) {
-                    await Capacitor.Plugins.Http.request({
-                        url: `http://${currentIp}:${s.port}`,
-                        method: 'GET'
-                    });
-                } else {
-                    // Fallback für Browser/Dev
-                    const ctrl = new AbortController();
-                    const t = setTimeout(() => ctrl.abort(), 4000);
-                    await fetch(`http://${currentIp}:${s.port}`, { signal: ctrl.signal });
-                    clearTimeout(t);
-                }
+                // no-cors: Request geht raus, Response ist "opaque" aber Erfolgsfall = Port offen!
+                const ctrl = new AbortController();
+                const t = setTimeout(() => ctrl.abort(), 4000);
+                await fetch(`http://${currentIp}:${s.port}/`, {
+                    mode: 'no-cors',
+                    cache: 'no-store',
+                    signal: ctrl.signal
+                });
+                clearTimeout(t);
+                // fetch resolved = Server hat geantwortet (auch opaque) = ONLINE
                 dot.className = 'status-dot up';
                 card.classList.remove('offline');
                 return true;
             } catch {
+                // Abort/Network Error = Port zu = OFFLINE
                 dot.className = 'status-dot down';
                 card.classList.add('offline');
                 return false;
