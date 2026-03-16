@@ -1,0 +1,25 @@
+{
+  "name": "homebase",
+  "version": "1.0.0",
+  "description": "Home Server Dashboard",
+  "scripts": {
+    "build:android": "npx cap sync android && cd android && ./gradlew assembleDebug"
+  },
+  "main": "sw.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bierzelt-kind/homebase-pwa.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bierzelt-kind/homebase-pwa/issues"
+  },
+  "homepage": "https://github.com/bierzelt-kind/homebase-pwa#readme",
+  "dependencies": {
+    "@capacitor/android": "^8.2.0",
+    "@capacitor/cli": "^8.2.0",
+    "@capacitor/core": "^8.2.0"
+  }
+}
