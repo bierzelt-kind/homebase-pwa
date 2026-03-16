@@ -3,257 +3,670 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#0f0c29">
+    <meta name="theme-color" content="#1a1a2e">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>HomeBase v2</title>
+    <title>HomeBase</title>
     <link rel="manifest" href="manifest.json">
     <style>
         :root {
-            --bg1: #0f0c29; --bg2: #302b63; --bg3: #24243e; --bg4: #1a1a2e;
-            --accent1: #00f2ff; --accent2: #bc13fe;
-            --card-bg: rgba(255,255,255,0.07); --card-border: rgba(255,255,255,0.1);
-            --text: #fff; --text-dim: rgba(255,255,255,0.6);
+            --surface: #121212;
+            --surface2: #1e1e2e;
+            --surface3: #2a2a3e;
+            --on-surface: #e6e1e5;
+            --on-surface-dim: #938f99;
+            --primary: #99c8ff;
+            --primary-container: #1a4570;
+            --secondary: #bbc3cb;
+            --tertiary: #d0bfe0;
+            --error: #ffb4ab;
+            --outline: #49454f;
+            --outline-variant: #44474f;
+            --card-radius: 16px;
+            --elevation-1: 0 1px 3px rgba(0,0,0,0.4);
+            --elevation-2: 0 2px 6px rgba(0,0,0,0.5);
+            --elevation-3: 0 4px 12px rgba(0,0,0,0.6);
         }
         .light {
-            --bg1: #e8eaf6; --bg2: #c5cae9; --bg3: #e8eaf6; --bg4: #f5f5f5;
-            --card-bg: rgba(255,255,255,0.8); --card-border: rgba(0,0,0,0.1);
-            --text: #1a1a2e; --text-dim: rgba(0,0,0,0.5);
+            --surface: #fef7ff;
+            --surface2: #f5f0f7;
+            --surface3: #e8e0ed;
+            --on-surface: #1d1b20;
+            --on-surface-dim: #79747e;
+            --primary: #3b6ea0;
+            --primary-container: #d3e4ff;
+            --secondary: #575e71;
+            --tertiary: #6d5677;
+            --error: #ba1a1a;
+            --outline: #79747e;
+            --outline-variant: #cac4d0;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            min-height: 100vh; color: var(--text);
-            display: flex; flex-direction: column; align-items: center;
-            padding: 15px;
-            background: linear-gradient(-45deg, var(--bg1), var(--bg2), var(--bg3), var(--bg4));
-            background-size: 400% 400%; animation: gradientBG 15s ease infinite;
+            font-family: 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+            background: var(--surface); color: var(--on-surface);
+            min-height: 100vh; min-height: 100dvh;
+            overflow-x: hidden;
         }
-        @keyframes gradientBG { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-        header { text-align: center; margin-bottom: 15px; width: 100%; max-width: 600px; display: flex; justify-content: space-between; align-items: center; }
-        .header-left { flex: 1; }
-        h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: 1px;
-            background: linear-gradient(to right, var(--accent1), var(--accent2));
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .greeting { font-size: 0.85rem; opacity: 0.8; margin-top: 3px; }
-        .theme-toggle { font-size: 1.5rem; cursor: pointer; padding: 8px; background: var(--card-bg); border-radius: 50%; border: 1px solid var(--card-border); }
-        .switch-wrapper {
-            background: rgba(0,0,0,0.3); border-radius: 50px; padding: 4px;
-            display: flex; position: relative; margin-bottom: 20px;
-            border: 1px solid var(--card-border); backdrop-filter: blur(10px);
-            width: 100%; max-width: 320px;
+
+        /* ===== NAV DRAWER ===== */
+        .drawer-scrim {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 99;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s;
         }
-        .switch-btn { flex: 1; text-align: center; padding: 10px; z-index: 2; cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: color 0.3s; color: var(--text-dim); }
-        .switch-btn.active { color: var(--text); text-shadow: 0 0 10px rgba(255,255,255,0.5); }
-        .switch-bg { position: absolute; top: 4px; left: 4px; width: calc(50% - 4px); height: calc(100% - 8px);
-            background: linear-gradient(90deg, var(--accent2), var(--accent1)); border-radius: 50px;
-            transition: transform 0.3s; z-index: 1; box-shadow: 0 0 15px rgba(0,242,255,0.4); }
-        .stats-bar { display: flex; gap: 8px; margin-bottom: 20px; width: 100%; max-width: 600px; justify-content: center; flex-wrap: wrap; }
-        .stat { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 8px 14px; font-size: 0.75rem; backdrop-filter: blur(10px); display: flex; align-items: center; gap: 5px; }
-        .stat .dot { width: 6px; height: 6px; border-radius: 50%; }
-        .stat .dot.green { background: #00ff88; box-shadow: 0 0 6px #00ff88; }
-        .stat .dot.red { background: #ff4444; box-shadow: 0 0 6px #ff4444; }
-        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; width: 100%; max-width: 600px; }
-        .card {
-            background: var(--card-bg); backdrop-filter: blur(16px);
-            border: 1px solid var(--card-border); border-radius: 16px;
-            padding: 16px; display: flex; flex-direction: column;
+        .drawer-scrim.open { opacity: 1; pointer-events: auto; }
+        .drawer {
+            position: fixed; top: 0; left: 0; bottom: 0;
+            width: 300px; max-width: 85vw; background: var(--surface2);
+            z-index: 100; transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; flex-direction: column;
+            border-radius: 0 28px 28px 0; overflow: hidden;
+        }
+        .drawer.open { transform: translateX(0); }
+        .drawer-header {
+            padding: 28px 28px 16px; font-size: 1.5rem; font-weight: 700;
+            color: var(--primary); letter-spacing: 0.5px;
+        }
+        .drawer-items { flex: 1; padding: 8px 12px; }
+        .drawer-item {
+            display: flex; align-items: center; gap: 16px;
+            padding: 14px 20px; border-radius: 28px; cursor: pointer;
+            font-size: 0.95rem; font-weight: 500; color: var(--on-surface);
+            transition: background 0.2s; user-select: none;
+        }
+        .drawer-item:hover { background: var(--surface3); }
+        .drawer-item.active { background: var(--primary-container); color: var(--primary); }
+        .drawer-item .di-icon { font-size: 1.4rem; width: 28px; text-align: center; }
+        .drawer-divider { height: 1px; background: var(--outline-variant); margin: 8px 20px; }
+
+        /* ===== APP BAR ===== */
+        .app-bar {
+            position: sticky; top: 0; z-index: 50;
+            background: var(--surface);
+            padding: 12px 16px; display: flex; align-items: center; gap: 8px;
+            border-bottom: 1px solid var(--outline-variant);
+        }
+        .app-bar-title { flex: 1; font-size: 1.2rem; font-weight: 600; }
+        .icon-btn {
+            width: 48px; height: 48px; border-radius: 50%; border: none;
+            background: transparent; color: var(--on-surface);
+            font-size: 1.4rem; cursor: pointer; display: flex;
             align-items: center; justify-content: center;
-            text-decoration: none; color: var(--text); position: relative;
-            transition: transform 0.1s, background 0.2s; height: 120px;
+            transition: background 0.2s;
+        }
+        .icon-btn:hover { background: var(--surface3); }
+        .icon-btn:active { background: var(--outline-variant); }
+
+        /* ===== MAIN CONTENT ===== */
+        .main { padding: 16px; max-width: 640px; margin: 0 auto; }
+
+        /* Page: Dashboard */
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* Status chip */
+        .status-chip {
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 8px 16px; border-radius: 28px; font-size: 0.85rem; font-weight: 500;
+            background: var(--surface2); border: 1px solid var(--outline-variant);
+            margin-bottom: 16px;
+        }
+        .status-chip .dot { width: 8px; height: 8px; border-radius: 50%; }
+        .status-chip .dot.green { background: #4caf50; box-shadow: 0 0 8px #4caf50; }
+        .status-chip .dot.red { background: #f44336; box-shadow: 0 0 8px #f44336; }
+        .status-chip .dot.orange { background: #ff9800; box-shadow: 0 0 8px #ff9800; }
+
+        /* Service grid */
+        .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .card {
+            background: var(--surface2); border-radius: var(--card-radius);
+            padding: 20px 16px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center;
+            text-decoration: none; color: var(--on-surface); position: relative;
+            transition: transform 0.1s, opacity 0.3s, filter 0.3s;
+            min-height: 130px; border: 1px solid var(--outline-variant);
         }
         .card:active { transform: scale(0.96); }
-        .card.disabled { opacity: 0.5; pointer-events: none; filter: grayscale(0.5); }
-        .icon-box { font-size: 2rem; margin-bottom: 6px; }
-        .card span { font-weight: 600; font-size: 0.9rem; }
-        .card small { font-size: 0.7rem; color: var(--text-dim); margin-top: 2px; }
+        .card.offline { opacity: 0.45; pointer-events: none; filter: grayscale(0.6); }
+        .card .icon-box { font-size: 2.2rem; margin-bottom: 8px; }
+        .card .card-name { font-weight: 600; font-size: 0.95rem; }
+        .card .card-desc { font-size: 0.75rem; color: var(--on-surface-dim); margin-top: 4px; }
         .status-dot { position: absolute; top: 12px; right: 12px; width: 8px; height: 8px; border-radius: 50%; }
-        .status-dot.up { background: #00ff88; box-shadow: 0 0 8px #00ff88; animation: pulse 2s infinite; }
-        .status-dot.down { background: #ff4444; box-shadow: 0 0 8px #ff4444; }
-        .status-dot.checking { background: #ffaa00; box-shadow: 0 0 8px #ffaa00; animation: blink 1s infinite; }
-        @keyframes pulse { 0%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(0,255,136,0.7)} 70%{transform:scale(1);box-shadow:0 0 0 6px rgba(0,255,136,0)} 100%{transform:scale(0.95)} }
+        .status-dot.up { background: #4caf50; box-shadow: 0 0 8px #4caf50; animation: pulse 2s infinite; }
+        .status-dot.down { background: #f44336; box-shadow: 0 0 8px #f44336; }
+        .status-dot.checking { background: #ff9800; box-shadow: 0 0 8px #ff9800; animation: blink 1s infinite; }
+        @keyframes pulse { 0%{transform:scale(0.95);box-shadow:0 0 0 0 rgba(76,175,80,0.6)} 70%{transform:scale(1);box-shadow:0 0 0 6px rgba(76,175,80,0)} 100%{transform:scale(0.95)} }
         @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.4} }
-        .settings { margin-top: 25px; width: 100%; max-width: 600px; margin-bottom: 20px; }
-        .settings details { background: var(--card-bg); border-radius: 12px; padding: 12px; border: 1px solid var(--card-border); }
-        .settings summary { cursor: pointer; font-weight: 500; font-size: 0.9rem; }
-        .settings input { padding: 10px; border-radius: 8px; border: none; width: 100%; margin-bottom: 8px; background: rgba(255,255,255,0.9); color: #333; font-size: 0.9rem; }
-        .settings button { padding: 10px 20px; border-radius: 8px; border: none; background: linear-gradient(90deg, var(--accent2), var(--accent1)); color: white; font-weight: 600; cursor: pointer; width: 100%; font-size: 0.9rem; }
-        .footer { margin-top: auto; padding: 15px; text-align: center; font-size: 0.7rem; color: var(--text-dim); }
+
+        /* FAB */
+        .fab {
+            position: fixed; bottom: 24px; right: 24px; z-index: 60;
+            width: 56px; height: 56px; border-radius: 16px; border: none;
+            background: var(--primary-container); color: var(--primary);
+            font-size: 1.8rem; cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
+            box-shadow: var(--elevation-3); transition: transform 0.2s;
+        }
+        .fab:hover { transform: scale(1.05); }
+        .fab:active { transform: scale(0.95); }
+
+        /* ===== MODAL / BOTTOM SHEET ===== */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200;
+            display: none; align-items: flex-end; justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-sheet {
+            background: var(--surface2); width: 100%; max-width: 640px;
+            border-radius: 28px 28px 0 0; padding: 24px; max-height: 90vh;
+            overflow-y: auto; animation: slideUp 0.3s ease;
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .modal-sheet h2 { font-size: 1.2rem; margin-bottom: 20px; }
+        .modal-sheet .handle { width: 32px; height: 4px; background: var(--outline-variant); border-radius: 2px; margin: 0 auto 16px; }
+
+        /* Form */
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 0.8rem; font-weight: 500; color: var(--on-surface-dim); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 14px 16px; border-radius: 12px;
+            border: 1px solid var(--outline-variant); background: var(--surface3);
+            color: var(--on-surface); font-size: 1rem; outline: none;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus { border-color: var(--primary); }
+        .form-row { display: flex; gap: 12px; }
+        .form-row .form-group { flex: 1; }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 12px 24px; border-radius: 28px; border: none; cursor: pointer;
+            font-size: 0.95rem; font-weight: 600; transition: all 0.2s;
+        }
+        .btn-primary { background: var(--primary-container); color: var(--primary); }
+        .btn-primary:hover { filter: brightness(1.2); }
+        .btn-danger { background: rgba(244,67,54,0.15); color: var(--error); }
+        .btn-danger:hover { background: rgba(244,67,54,0.25); }
+        .btn-outlined { background: transparent; border: 1px solid var(--outline); color: var(--primary); }
+        .btn-outlined:hover { background: var(--surface3); }
+        .btn-full { width: 100%; }
+        .btn-row { display: flex; gap: 8px; margin-top: 16px; }
+
+        /* ===== SERVICES LIST (Manage page) ===== */
+        .service-list { display: flex; flex-direction: column; gap: 8px; }
+        .service-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 14px 16px; background: var(--surface2);
+            border-radius: var(--card-radius); border: 1px solid var(--outline-variant);
+            cursor: pointer; transition: background 0.2s;
+        }
+        .service-item:hover { background: var(--surface3); }
+        .service-item .si-icon { font-size: 1.6rem; }
+        .service-item .si-info { flex: 1; }
+        .service-item .si-name { font-weight: 600; font-size: 0.95rem; }
+        .service-item .si-port { font-size: 0.8rem; color: var(--on-surface-dim); }
+        .service-item .si-actions { display: flex; gap: 4px; }
+        .service-item .si-actions button {
+            width: 36px; height: 36px; border-radius: 50%; border: none;
+            background: transparent; color: var(--on-surface-dim); font-size: 1.1rem;
+            cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .service-item .si-actions button:hover { background: var(--surface3); color: var(--on-surface); }
+        .service-item .si-actions button.del:hover { color: var(--error); }
+
+        /* Empty state */
+        .empty-state { text-align: center; padding: 40px 20px; color: var(--on-surface-dim); }
+        .empty-state .es-icon { font-size: 3rem; margin-bottom: 12px; }
+        .empty-state p { font-size: 0.95rem; }
+
+        /* ===== SETTINGS PAGE ===== */
+        .settings-section { margin-bottom: 24px; }
+        .settings-section h3 { font-size: 0.85rem; font-weight: 600; color: var(--on-surface-dim); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 12px; }
+        .settings-item {
+            display: flex; align-items: center; gap: 16px;
+            padding: 14px 16px; background: var(--surface2);
+            border-radius: var(--card-radius); border: 1px solid var(--outline-variant);
+            margin-bottom: 8px; cursor: pointer;
+        }
+        .settings-item .st-icon { font-size: 1.4rem; width: 28px; text-align: center; }
+        .settings-item .st-text { flex: 1; }
+        .settings-item .st-label { font-weight: 500; font-size: 0.95rem; }
+        .settings-item .st-sub { font-size: 0.8rem; color: var(--on-surface-dim); }
+
+        /* Last check */
+        .last-check { font-size: 0.75rem; color: var(--on-surface-dim); text-align: center; padding: 8px; }
+
+        /* Snackbar */
+        .snackbar {
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: var(--surface3); color: var(--on-surface);
+            padding: 12px 24px; border-radius: 12px; font-size: 0.9rem;
+            box-shadow: var(--elevation-3); z-index: 300; transition: transform 0.3s;
+            max-width: 90%; text-align: center;
+        }
+        .snackbar.show { transform: translateX(-50%) translateY(0); }
     </style>
 </head>
 <body>
-    <header>
-        <div class="header-left">
-            <h1 id="title">HOME SERVER</h1>
-            <div class="greeting" id="msg">System bereit.</div>
-        </div>
-        <div class="theme-toggle" onclick="toggleTheme()">🌙</div>
-    </header>
-    
-    <div class="switch-wrapper">
-        <div class="switch-bg" id="bg"></div>
-        <div class="switch-btn active" id="btn-l" onclick="mode('local')">📶 Lokal</div>
-        <div class="switch-btn" id="btn-r" onclick="mode('vpn')">🌍 VPN</div>
-    </div>
-    
-    <div class="stats-bar">
-        <div class="stat"><div class="dot green" id="stat-online"></div><span id="stat-text">Checking...</span></div>
-    </div>
-    
-    <div class="grid" id="service-grid"></div>
-    
-    <div class="settings">
-        <details>
-            <summary>⚙️ Einstellungen</summary>
-            <div style="margin-top: 12px;">
-                <p style="margin-bottom: 4px; opacity: 0.8; font-size: 0.85rem;">Lokale IP:</p>
-                <input type="text" id="ip-l" placeholder="192.168.x.x">
-                <p style="margin-bottom: 4px; opacity: 0.8; font-size: 0.85rem;">Tailscale IP:</p>
-                <input type="text" id="ip-r" placeholder="100.x.x.x">
-                <button onclick="saveSettings()">💾 Speichern</button>
+
+    <!-- Drawer -->
+    <div class="drawer-scrim" id="scrim" onclick="closeDrawer()"></div>
+    <div class="drawer" id="drawer">
+        <div class="drawer-header">🏠 HomeBase</div>
+        <div class="drawer-items">
+            <div class="drawer-item active" data-page="dashboard" onclick="nav('dashboard')">
+                <span class="di-icon">📊</span> Dashboard
             </div>
-        </details>
+            <div class="drawer-item" data-page="services" onclick="nav('services')">
+                <span class="di-icon">⚙️</span> Services verwalten
+            </div>
+            <div class="drawer-item" data-page="settings" onclick="nav('settings')">
+                <span class="di-icon">🔧</span> Einstellungen
+            </div>
+            <div class="drawer-divider"></div>
+            <div class="drawer-item" onclick="toggleTheme()">
+                <span class="di-icon" id="theme-icon">🌙</span> Design wechseln
+            </div>
+        </div>
     </div>
-    
-    <div class="footer">HomeBase v2.0 | <span id="last-check">Noch nie</span></div>
-    
+
+    <!-- App Bar -->
+    <div class="app-bar">
+        <button class="icon-btn" onclick="openDrawer()">☰</button>
+        <div class="app-bar-title" id="page-title">Dashboard</div>
+        <button class="icon-btn" onclick="checkAllStatus()" title="Status aktualisieren">🔄</button>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main">
+
+        <!-- PAGE: Dashboard -->
+        <div class="page active" id="page-dashboard">
+            <div class="status-chip">
+                <div class="dot orange" id="status-dot"></div>
+                <span id="status-text">Prüfe...</span>
+            </div>
+            <div class="grid" id="service-grid"></div>
+            <div class="last-check" id="last-check">Noch nie geprüft</div>
+        </div>
+
+        <!-- PAGE: Services verwalten -->
+        <div class="page" id="page-services">
+            <div class="service-list" id="service-list"></div>
+            <div class="empty-state" id="empty-services" style="display:none">
+                <div class="es-icon">📋</div>
+                <p>Noch keine Services.<br>Tipp auf + um einen hinzuzufügen.</p>
+            </div>
+            <div style="height: 80px"></div>
+        </div>
+
+        <!-- PAGE: Einstellungen -->
+        <div class="page" id="page-settings">
+            <div class="settings-section">
+                <h3>Netzwerk</h3>
+                <div class="form-group">
+                    <label>Lokale IP-Adresse</label>
+                    <input type="text" id="ip-l" placeholder="192.168.x.x" oninput="saveIpSettings()">
+                </div>
+                <div class="form-group">
+                    <label>VPN / Remote IP-Adresse</label>
+                    <input type="text" id="ip-r" placeholder="100.x.x.x" oninput="saveIpSettings()">
+                </div>
+            </div>
+            <div class="settings-section">
+                <h3>Daten</h3>
+                <div class="settings-item" onclick="exportSettings()">
+                    <span class="st-icon">📤</span>
+                    <div class="st-text">
+                        <div class="st-label">Einstellungen exportieren</div>
+                        <div class="st-sub">Services, IPs & Konfiguration als JSON sichern</div>
+                    </div>
+                </div>
+                <div class="settings-item" onclick="importSettings()">
+                    <span class="st-icon">📥</span>
+                    <div class="st-text">
+                        <div class="st-label">Einstellungen importieren</div>
+                        <div class="st-sub">Aus Backup-Datei wiederherstellen</div>
+                    </div>
+                </div>
+                <input type="file" id="import-file" accept=".json" style="display:none" onchange="handleImport(event)">
+            </div>
+        </div>
+    </div>
+
+    <!-- FAB (on services page) -->
+    <button class="fab" id="fab" onclick="openAddModal()" style="display:none">+</button>
+
+    <!-- Modal: Add/Edit Service -->
+    <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+        <div class="modal-sheet">
+            <div class="handle"></div>
+            <h2 id="modal-title">Service hinzufügen</h2>
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="svc-name" placeholder="z.B. Jellyfin">
+            </div>
+            <div class="form-group">
+                <label>Emoji / Icon</label>
+                <input type="text" id="svc-icon" placeholder="z.B. ▶️" maxlength="4">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Port</label>
+                    <input type="number" id="svc-port" placeholder="8096" min="1" max="65535">
+                </div>
+                <div class="form-group">
+                    <label>Beschreibung</label>
+                    <input type="text" id="svc-desc" placeholder="Media Player">
+                </div>
+            </div>
+            <div class="btn-row">
+                <button class="btn btn-primary btn-full" onclick="saveService()">💾 Speichern</button>
+                <button class="btn btn-outlined" onclick="closeModal()">Abbrechen</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Snackbar -->
+    <div class="snackbar" id="snackbar"></div>
+
     <script>
-        const SERVICES = [
+        // ===== DATA =====
+        const DEFAULT_SERVICES = [
             { id: 'jellyseerr', name: 'Jellyseerr', icon: '🔍', port: 5055, desc: 'Requests' },
             { id: 'jellyfin',  name: 'Jellyfin',  icon: '▶️',  port: 8096, desc: 'Media Player' },
             { id: 'sabnzbd',   name: 'SABnzbd',   icon: '⬇️',  port: 8080, desc: 'Downloader' },
             { id: 'sonarr',    name: 'Sonarr',     icon: '📺',  port: 8989, desc: 'TV Series' },
             { id: 'radarr',    name: 'Radarr',     icon: '🎬',  port: 7878, desc: 'Movies' },
-            { id: 'glances',   name: 'Glances',    icon: '📊',  port: 61208,desc: 'System Info' },
+            { id: 'glances',   name: 'Glances',    icon: '📊',  port: 61208, desc: 'System Info' },
             { id: 'portainer', name: 'Portainer',  icon: '🐳',  port: 9000, desc: 'Docker' },
             { id: 'traefik',   name: 'Traefik',    icon: '🌐',  port: 8081, desc: 'Reverse Proxy' },
         ];
-        
+
+        let services = JSON.parse(localStorage.getItem('hb_services')) || [...DEFAULT_SERVICES];
         let ipLocal = localStorage.getItem('ip_l') || '192.168.0.76';
         let ipRemote = localStorage.getItem('ip_r') || '100.86.200.106';
         let currentIp = ipLocal;
-        let curMode = 'local';
-        let lightMode = localStorage.getItem('light') === 'true';
-        
-        // Init
-        document.getElementById('ip-l').value = ipLocal;
-        document.getElementById('ip-r').value = ipRemote;
-        if (lightMode) document.body.classList.add('light');
-        
-        // Render cards
-        function renderCards() {
+        let currentPage = 'dashboard';
+        let editingId = null;
+        let statusInterval = null;
+
+        // ===== INIT =====
+        function init() {
+            if (localStorage.getItem('light') === 'true') document.body.classList.add('light');
+            if (localStorage.getItem('light') === 'true') document.getElementById('theme-icon').textContent = '☀️';
+            document.getElementById('ip-l').value = ipLocal;
+            document.getElementById('ip-r').value = ipRemote;
+            renderDashboard();
+            renderServiceList();
+            checkAllStatus();
+            startAutoCheck();
+        }
+
+        // ===== NAVIGATION =====
+        function openDrawer() {
+            document.getElementById('drawer').classList.add('open');
+            document.getElementById('scrim').classList.add('open');
+        }
+        function closeDrawer() {
+            document.getElementById('drawer').classList.remove('open');
+            document.getElementById('scrim').classList.remove('open');
+        }
+        function nav(page) {
+            currentPage = page;
+            closeDrawer();
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById('page-' + page).classList.add('active');
+            document.querySelectorAll('.drawer-item[data-page]').forEach(d => d.classList.toggle('active', d.dataset.page === page));
+
+            const titles = { dashboard: 'Dashboard', services: 'Services verwalten', settings: 'Einstellungen' };
+            document.getElementById('page-title').textContent = titles[page] || 'HomeBase';
+            document.getElementById('fab').style.display = page === 'services' ? 'flex' : 'none';
+            if (page === 'services') renderServiceList();
+        }
+
+        // ===== DASHBOARD =====
+        function renderDashboard() {
             const grid = document.getElementById('service-grid');
-            grid.innerHTML = SERVICES.map(s => `
+            if (services.length === 0) {
+                grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="es-icon">📋</div><p>Keine Services.<br>Im Menü → Services verwalten</p></div>';
+                return;
+            }
+            grid.innerHTML = services.map(s => `
                 <a href="http://${currentIp}:${s.port}" class="card" id="card-${s.id}" onclick="return safeNav(event, '${s.id}')">
                     <div class="status-dot checking" id="dot-${s.id}"></div>
                     <div class="icon-box">${s.icon}</div>
-                    <span>${s.name}</span>
-                    <small>${s.desc}</small>
+                    <div class="card-name">${s.name}</div>
+                    <div class="card-desc">${s.desc} · :${s.port}</div>
                 </a>
             `).join('');
         }
-        
-        // Prevent double navigation
-        let lastNav = 0;
+
         function safeNav(e, id) {
-            const now = Date.now();
-            if (now - lastNav < 500) { e.preventDefault(); return false; }
-            const card = document.getElementById(`card-${id}`);
-            if (card.classList.contains('disabled')) { e.preventDefault(); return false; }
-            lastNav = now;
+            const card = document.getElementById('card-' + id);
+            if (!card || card.classList.contains('offline')) { e.preventDefault(); return false; }
             return true;
         }
-        
-        // Check service status
-        async function checkStatus() {
+
+        // ===== STATUS CHECK =====
+        async function checkServiceStatus(s) {
+            const dot = document.getElementById('dot-' + s.id);
+            const card = document.getElementById('card-' + s.id);
+            if (!dot || !card) return false;
+            dot.className = 'status-dot checking';
+            try {
+                const ctrl = new AbortController();
+                const t = setTimeout(() => ctrl.abort(), 4000);
+                const res = await fetch(`http://${currentIp}:${s.port}`, { mode: 'no-cors', signal: ctrl.signal });
+                clearTimeout(t);
+                dot.className = 'status-dot up';
+                card.classList.remove('offline');
+                return true;
+            } catch {
+                dot.className = 'status-dot down';
+                card.classList.add('offline');
+                return false;
+            }
+        }
+
+        async function checkAllStatus() {
             let online = 0;
-            const total = SERVICES.length;
-            
-            for (const s of SERVICES) {
-                const dot = document.getElementById(`dot-${s.id}`);
-                dot.className = 'status-dot checking';
-                
-                try {
-                    const ctrl = new AbortController();
-                    const timeout = setTimeout(() => ctrl.abort(), 3000);
-                    await fetch(`http://${currentIp}:${s.port}`, { mode: 'no-cors', signal: ctrl.signal });
-                    clearTimeout(timeout);
-                    dot.className = 'status-dot up';
-                    document.getElementById(`card-${s.id}`).classList.remove('disabled');
-                    online++;
-                } catch {
-                    dot.className = 'status-dot down';
-                    document.getElementById(`card-${s.id}`).classList.add('disabled');
-                }
+            for (const s of services) {
+                if (await checkServiceStatus(s)) online++;
             }
-            
-            const statDot = document.getElementById('stat-online');
-            const statText = document.getElementById('stat-text');
-            statDot.className = `dot ${online > 0 ? 'green' : 'red'}`;
-            statText.textContent = `${online}/${total} Online`;
-            document.getElementById('last-check').textContent = new Date().toLocaleTimeString('de-DE');
-        }
-        
-        // Mode switch
-        function mode(m) {
-            const bl = document.getElementById('btn-l');
-            const br = document.getElementById('btn-r');
-            const bg = document.getElementById('bg');
-            
-            if (m === 'local') {
-                currentIp = ipLocal; curMode = 'local';
-                bl.classList.add('active'); br.classList.remove('active');
-                bg.style.transform = 'translateX(0)';
+            const total = services.length;
+            const dot = document.getElementById('status-dot');
+            const txt = document.getElementById('status-text');
+            if (total === 0) {
+                dot.className = 'dot orange'; txt.textContent = 'Keine Services';
+            } else if (online === total) {
+                dot.className = 'dot green'; txt.textContent = `Alle ${total} online`;
+            } else if (online === 0) {
+                dot.className = 'dot red'; txt.textContent = `Alle offline (0/${total})`;
             } else {
-                currentIp = ipRemote; curMode = 'vpn';
-                br.classList.add('active'); bl.classList.remove('active');
-                bg.style.transform = 'translateX(100%)';
+                dot.className = 'dot orange'; txt.textContent = `${online}/${total} online`;
             }
-            renderCards();
-            checkStatus();
+            document.getElementById('last-check').textContent = `Zuletzt geprüft: ${new Date().toLocaleTimeString('de-DE')}`;
         }
-        
-        // Theme toggle
-        function toggleTheme() {
-            lightMode = !lightMode;
-            document.body.classList.toggle('light');
-            localStorage.setItem('light', lightMode);
+
+        function startAutoCheck() {
+            if (statusInterval) clearInterval(statusInterval);
+            statusInterval = setInterval(checkAllStatus, 60000);
         }
-        
-        // Settings
-        function saveSettings() {
-            ipLocal = document.getElementById('ip-l').value || ipLocal;
-            ipRemote = document.getElementById('ip-r').value || ipRemote;
+
+        // ===== SERVICE MANAGEMENT =====
+        function renderServiceList() {
+            const list = document.getElementById('service-list');
+            const empty = document.getElementById('empty-services');
+            if (services.length === 0) {
+                list.innerHTML = ''; empty.style.display = 'block'; return;
+            }
+            empty.style.display = 'none';
+            list.innerHTML = services.map(s => `
+                <div class="service-item" onclick="editService('${s.id}')">
+                    <span class="si-icon">${s.icon}</span>
+                    <div class="si-info">
+                        <div class="si-name">${s.name}</div>
+                        <div class="si-port">Port ${s.port} · ${s.desc}</div>
+                    </div>
+                    <div class="si-actions">
+                        <button onclick="event.stopPropagation();editService('${s.id}')" title="Bearbeiten">✏️</button>
+                        <button class="del" onclick="event.stopPropagation();deleteService('${s.id}')" title="Löschen">🗑️</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openAddModal() {
+            editingId = null;
+            document.getElementById('modal-title').textContent = 'Service hinzufügen';
+            document.getElementById('svc-name').value = '';
+            document.getElementById('svc-icon').value = '';
+            document.getElementById('svc-port').value = '';
+            document.getElementById('svc-desc').value = '';
+            document.getElementById('modal').classList.add('open');
+        }
+
+        function editService(id) {
+            const s = services.find(x => x.id === id);
+            if (!s) return;
+            editingId = id;
+            document.getElementById('modal-title').textContent = 'Service bearbeiten';
+            document.getElementById('svc-name').value = s.name;
+            document.getElementById('svc-icon').value = s.icon;
+            document.getElementById('svc-port').value = s.port;
+            document.getElementById('svc-desc').value = s.desc;
+            document.getElementById('modal').classList.add('open');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('open');
+        }
+
+        function saveService() {
+            const name = document.getElementById('svc-name').value.trim();
+            const icon = document.getElementById('svc-icon').value.trim() || '📱';
+            const port = parseInt(document.getElementById('svc-port').value);
+            const desc = document.getElementById('svc-desc').value.trim() || 'Service';
+            if (!name || !port || port < 1 || port > 65535) {
+                showSnackbar('Name und gültiger Port (1-65535) benötigt!');
+                return;
+            }
+            if (editingId) {
+                const idx = services.findIndex(x => x.id === editingId);
+                if (idx >= 0) services[idx] = { ...services[idx], name, icon, port, desc };
+                showSnackbar(`${name} aktualisiert! ✅`);
+            } else {
+                const id = name.toLowerCase().replace(/[^a-z0-9]/g, '') + Date.now().toString(36);
+                services.push({ id, name, icon, port, desc });
+                showSnackbar(`${name} hinzugefügt! 🎉`);
+            }
+            saveServices();
+            closeModal();
+            renderDashboard();
+            renderServiceList();
+            checkAllStatus();
+        }
+
+        function deleteService(id) {
+            const s = services.find(x => x.id === id);
+            if (!s) return;
+            if (!confirm(`"${s.name}" wirklich löschen?`)) return;
+            services = services.filter(x => x.id !== id);
+            saveServices();
+            renderDashboard();
+            renderServiceList();
+            showSnackbar(`${s.name} gelöscht! 🗑️`);
+        }
+
+        function saveServices() {
+            localStorage.setItem('hb_services', JSON.stringify(services));
+        }
+
+        // ===== IP SETTINGS =====
+        function saveIpSettings() {
+            ipLocal = document.getElementById('ip-l').value.trim() || ipLocal;
+            ipRemote = document.getElementById('ip-r').value.trim() || ipRemote;
             localStorage.setItem('ip_l', ipLocal);
             localStorage.setItem('ip_r', ipRemote);
-            currentIp = curMode === 'local' ? ipLocal : ipRemote;
-            renderCards();
-            checkStatus();
+            currentIp = ipLocal; // default to local
         }
-        
-        // Greeting
-        function greet() {
-            const h = new Date().getHours();
-            const t = document.getElementById('title');
-            const m = document.getElementById('msg');
-            if (h < 12)      { t.textContent = 'GUTEN MORGEN'; m.textContent = '☕ Systeme laufen stabil.'; }
-            else if (h < 18) { t.textContent = 'WILLKOMMEN'; m.textContent = '🎬 Zeit fuer was zu schauen?'; }
-            else             { t.textContent = 'GUTEN ABEND'; m.textContent = '🌙 Genieß den Abend!'; }
+
+        // ===== EXPORT / IMPORT =====
+        function exportSettings() {
+            const data = {
+                version: 2,
+                exportDate: new Date().toISOString(),
+                services: services,
+                ipLocal: ipLocal,
+                ipRemote: ipRemote,
+                lightMode: document.body.classList.contains('light')
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `homebase-backup-${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showSnackbar('Backup heruntergeladen! 📥');
         }
-        
-        // Service Worker
-        if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
-        
-        // Settings: check status when opened
-        document.querySelector('.settings details').addEventListener('toggle', function() {
-            if (this.open) checkStatus();
-        });
-        
-        renderCards();
-        mode('local');
-        greet();
-        checkStatus();
-        setInterval(checkStatus, 60000); // Re-check every minute
+
+        function importSettings() {
+            document.getElementById('import-file').click();
+        }
+
+        function handleImport(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    if (!data.services || !Array.isArray(data.services)) throw new Error('Invalid format');
+                    services = data.services;
+                    if (data.ipLocal) { ipLocal = data.ipLocal; localStorage.setItem('ip_l', ipLocal); document.getElementById('ip-l').value = ipLocal; }
+                    if (data.ipRemote) { ipRemote = data.ipRemote; localStorage.setItem('ip_r', ipRemote); document.getElementById('ip-r').value = ipRemote; }
+                    if (typeof data.lightMode === 'boolean') {
+                        document.body.classList.toggle('light', data.lightMode);
+                        localStorage.setItem('light', data.lightMode);
+                    }
+                    saveServices();
+                    renderDashboard();
+                    renderServiceList();
+                    checkAllStatus();
+                    showSnackbar(`Importiert! ${services.length} Services ✅`);
+                } catch (err) {
+                    showSnackbar('Fehler beim Import: Ungültige Datei ❌');
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        }
+
+        // ===== THEME =====
+        function toggleTheme() {
+            const isLight = document.body.classList.toggle('light');
+            localStorage.setItem('light', isLight);
+            document.getElementById('theme-icon').textContent = isLight ? '☀️' : '🌙';
+            closeDrawer();
+        }
+
+        // ===== SNACKBAR =====
+        function showSnackbar(msg) {
+            const sb = document.getElementById('snackbar');
+            sb.textContent = msg;
+            sb.classList.add('show');
+            setTimeout(() => sb.classList.remove('show'), 3000);
+        }
+
+        // ===== SERVICE WORKER =====
+        if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+
+        // ===== START =====
+        init();
     </script>
 </body>
 </html>
