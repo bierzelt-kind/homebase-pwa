@@ -457,21 +457,28 @@
             if (!dot || !card) return false;
             dot.className = 'status-dot checking';
             try {
-                // no-cors: Request geht raus, Response ist "opaque" aber Erfolgsfall = Port offen!
-                const ctrl = new AbortController();
-                const t = setTimeout(() => ctrl.abort(), 4000);
-                await fetch(`http://${currentIp}:${s.port}/`, {
-                    mode: 'no-cors',
-                    cache: 'no-store',
-                    signal: ctrl.signal
-                });
-                clearTimeout(t);
-                // fetch resolved = Server hat geantwortet (auch opaque) = ONLINE
-                dot.className = 'status-dot up';
-                card.classList.remove('offline');
-                return true;
+                let isUp = false;
+                // Native TCP Check — KEIN HTTP, kein CORS, kein WebView Bug!
+                if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.PortCheck) {
+                    const res = await Capacitor.Plugins.PortCheck.check({
+                        host: currentIp,
+                        port: s.port,
+                        timeout: 4000
+                    });
+                    isUp = res.open;
+                } else {
+                    // Browser Fallback
+                    const ctrl = new AbortController();
+                    const t = setTimeout(() => ctrl.abort(), 4000);
+                    await fetch(`http://${currentIp}:${s.port}/`, { signal: ctrl.signal });
+                    clearTimeout(t);
+                    isUp = true;
+                }
+                dot.className = isUp ? 'status-dot up' : 'status-dot down';
+                if (isUp) card.classList.remove('offline');
+                else card.classList.add('offline');
+                return isUp;
             } catch {
-                // Abort/Network Error = Port zu = OFFLINE
                 dot.className = 'status-dot down';
                 card.classList.add('offline');
                 return false;
