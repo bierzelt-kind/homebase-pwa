@@ -4,6 +4,21 @@
     "webDir": "www",
     "server": {
         "cleartext": true,
-        "allowNavigation": ["192.168.*", "100.*", "10.*", "172.*"]
+        "allowNavigation": [
+            "192.168.*",
+            "192.168.*.*:*",
+            "100.*",
+            "100.*.*.*:*",
+            "10.*",
+            "10.*.*.*:*",
+            "172.*",
+            "172.*.*.*:*",
+            "localhost",
+            "localhost:*"
+        ]
+    },
+    "android": {
+        "allowMixedContent": true,
+        "captureInput": true
     }
 }
