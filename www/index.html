@@ -3,43 +3,92 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
-    <title>HomeBase</title>
+    <title>HomeDash</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏠</text></svg>">
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--fg); min-height: 100vh; }
         :root { --bg:#0d1117; --fg:#e6edf3; --card:#161b22; --accent:#58a6ff; --border:#30363d; --mono: 'SF Mono', 'Fira Code', monospace; }
         .safe-top { height: env(safe-area-inset-top, 20px); }
+        .safe-bottom { height: max(env(safe-area-inset-bottom, 16px), 16px); }
+
+        /* ===== ONBOARDING ===== */
+        .onboarding { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 40px 24px; text-align: center; }
+        .onboarding .big-logo { font-size: 80px; margin-bottom: 16px; }
+        .onboarding h1 { font-size: 32px; font-weight: 800; margin-bottom: 8px; }
+        .onboarding .subtitle { font-size: 16px; opacity: .6; margin-bottom: 40px; line-height: 1.5; }
+        .onboarding .setup-card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 24px; width: 100%; max-width: 360px; text-align: left; }
+        .onboarding .setup-card h2 { font-size: 16px; font-weight: 600; margin-bottom: 16px; text-align: center; }
+        .onboarding .field { margin-bottom: 14px; }
+        .onboarding .field label { display: block; font-size: 12px; opacity: .6; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+        .onboarding .field input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: var(--fg); font-family: var(--mono); font-size: 15px; outline: none; }
+        .onboarding .field input:focus { border-color: var(--accent); }
+        .onboarding .field .hint { font-size: 11px; opacity: .4; margin-top: 4px; }
+        .onboarding .start-btn { width: 100%; background: var(--accent); color: #fff; border: none; border-radius: 12px; padding: 14px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 8px; transition: .15s; }
+        .onboarding .start-btn:active { transform: scale(.97); opacity: .8; }
+
+        /* ===== MAIN APP ===== */
+        .app { display: none; }
         .header { padding: 16px 20px 12px; display: flex; align-items: center; justify-content: space-between; }
         .header h1 { font-size: 22px; font-weight: 700; }
-        .logo { font-size: 28px; }
-        .url-section { padding: 0 20px; margin-bottom: 8px; }
-        .url-bar { display: flex; align-items: center; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; gap: 8px; }
-        .url-bar label { font-size: 11px; opacity: .5; text-transform: uppercase; letter-spacing: .5px; flex-shrink: 0; }
-        .url-bar input { flex: 1; background: transparent; border: none; color: var(--fg); font-family: var(--mono); font-size: 14px; outline: none; }
+        .header .settings-btn { background: none; border: none; font-size: 20px; cursor: pointer; opacity: .6; padding: 4px; }
+        .ip-switch { display: flex; gap: 8px; padding: 0 20px; margin-bottom: 8px; }
+        .ip-switch button { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px; color: var(--fg); font-size: 12px; cursor: pointer; transition: .15s; }
+        .ip-switch button.active { border-color: var(--accent); background: rgba(88,166,255,.1); }
+        .ip-switch button .ip-label { font-weight: 600; display: block; margin-bottom: 2px; }
+        .ip-switch button .ip-value { font-family: var(--mono); font-size: 11px; opacity: .6; }
         .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px 20px; }
         .service-card { background: var(--card); border-radius: 14px; padding: 16px 18px; display: flex; align-items: center; cursor: pointer; transition: .15s; }
         .service-card:active { transform: scale(.97); }
         .service-name { font-size: 14px; font-weight: 600; }
         .service-url { font-size: 12px; opacity: .5; font-family: var(--mono); }
         .status-dot { width: 12px; height: 12px; border-radius: 50%; background: #555; flex-shrink: 0; margin-left: auto; }
-        .safe-bottom { height: max(env(safe-area-inset-bottom, 16px), 16px); }
     </style>
 </head>
 <body>
     <div class="safe-top"></div>
-    <div class="header">
-        <h1>🏠 HomeBase</h1>
-        <span class="logo">🐬</span>
-    </div>
-    <div class="url-section">
-        <div class="url-bar">
-            <label>IP</label>
-            <input type="text" id="ip-input" placeholder="192.168.2.42" inputmode="decimal">
+
+    <!-- ===== ONBOARDING SCREEN ===== -->
+    <div class="onboarding" id="onboarding">
+        <div class="big-logo">🏠</div>
+        <h1>HomeDash</h1>
+        <div class="subtitle">Dein Zuhause.<br>Immer im Griff.</div>
+        <div class="setup-card">
+            <h2>⚙️ Ersteinrichtung</h2>
+            <div class="field">
+                <label>🏠 Home IP (lokal)</label>
+                <input type="text" id="setup-home-ip" placeholder="192.168.2.42" inputmode="decimal">
+                <div class="hint">IP in deinem Heimnetzwerk</div>
+            </div>
+            <div class="field">
+                <label>🌐 Öffentliche IP / Domain</label>
+                <input type="text" id="setup-public-ip" placeholder="meine.duckdns.org" inputmode="url">
+                <div class="hint">Von unterwegs erreichbar (DynDNS, feste IP, etc.)</div>
+            </div>
+            <button class="start-btn" onclick="finishSetup()">🚀 Los geht's!</button>
         </div>
     </div>
-    <div class="grid" id="grid"></div>
-    <div class="safe-bottom"></div>
+
+    <!-- ===== MAIN APP ===== -->
+    <div class="app" id="app">
+        <div class="header">
+            <h1>🏠 HomeDash</h1>
+            <button class="settings-btn" onclick="resetSettings()" title="Einstellungen">⚙️</button>
+        </div>
+        <div class="ip-switch">
+            <button id="btn-home" onclick="switchIp('home')" class="active">
+                <span class="ip-label">🏠 Home</span>
+                <span class="ip-value" id="display-home-ip">192.168.2.42</span>
+            </button>
+            <button id="btn-public" onclick="switchIp('public')">
+                <span class="ip-label">🌐 Unterwegs</span>
+                <span class="ip-value" id="display-public-ip">meine.duckdns.org</span>
+            </button>
+        </div>
+        <div class="grid" id="grid"></div>
+        <div class="safe-bottom"></div>
+    </div>
+
     <script>
         const services = [
             { id: 'ha',       name: 'HomeAssistant', port: 8123,  icon: '🏠', color: '#41bdf5' },
@@ -50,44 +99,90 @@
             { id: 'plex',     name: 'Plex',          port: 32400, icon: '🎬', color: '#e5a00d' },
         ];
 
-        let currentIp = localStorage.getItem('hb-ip') || '192.168.2.42';
+        let currentMode = 'home'; // 'home' or 'public'
 
-        function loadIp() {
-            document.getElementById('ip-input').value = currentIp;
+        function getConfig() {
+            return {
+                homeIp: localStorage.getItem('hd-home-ip') || '',
+                publicIp: localStorage.getItem('hd-public-ip') || '',
+                setupDone: localStorage.getItem('hd-setup-done') === 'true'
+            };
         }
 
-        function saveIp() {
-            const v = document.getElementById('ip-input').value.trim();
-            if (v) { currentIp = v; localStorage.setItem('hb-ip', v); renderCards(); }
+        function getActiveIp() {
+            const cfg = getConfig();
+            return currentMode === 'home' ? cfg.homeIp : cfg.publicIp;
         }
 
+        // ===== ONBOARDING =====
+        function finishSetup() {
+            const homeIp = document.getElementById('setup-home-ip').value.trim();
+            const publicIp = document.getElementById('setup-public-ip').value.trim();
+            if (!homeIp) { alert('Bitte Home IP eingeben!'); return; }
+            localStorage.setItem('hd-home-ip', homeIp);
+            localStorage.setItem('hd-public-ip', publicIp || homeIp);
+            localStorage.setItem('hd-setup-done', 'true');
+            showApp();
+        }
+
+        function resetSettings() {
+            if (confirm('Einstellungen zurücksetzen?')) {
+                localStorage.removeItem('hd-home-ip');
+                localStorage.removeItem('hd-public-ip');
+                localStorage.removeItem('hd-setup-done');
+                location.reload();
+            }
+        }
+
+        // ===== IP SWITCH =====
+        function switchIp(mode) {
+            currentMode = mode;
+            document.getElementById('btn-home').className = mode === 'home' ? 'active' : '';
+            document.getElementById('btn-public').className = mode === 'public' ? 'active' : '';
+            renderCards();
+        }
+
+        // ===== CARDS =====
         function openService(s) {
+            const ip = getActiveIp();
             const proto = s.port === 443 ? 'https' : 'http';
-            window.open(`${proto}://${currentIp}:${s.port}`, '_blank');
+            window.open(`${proto}://${ip}:${s.port}`, '_blank');
         }
 
         function renderCards() {
+            const ip = getActiveIp();
             const grid = document.getElementById('grid');
             grid.innerHTML = '';
             services.forEach(s => {
                 const card = document.createElement('div');
                 card.className = 'service-card';
-                card.id = 'card-' + s.id;
                 card.style.borderLeft = `4px solid ${s.color}`;
                 card.innerHTML = `
                     <div class="service-info">
                         <div class="service-name">${s.icon} ${s.name}</div>
-                        <div class="service-url">${currentIp}:${s.port}</div>
+                        <div class="service-url">${ip}:${s.port}</div>
                     </div>
-                    <div class="status-dot" id="dot-${s.id}"></div>`;
+                    <div class="status-dot"></div>`;
                 card.onclick = () => openService(s);
                 grid.appendChild(card);
             });
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            loadIp();
+        function showApp() {
+            const cfg = getConfig();
+            document.getElementById('display-home-ip').textContent = cfg.homeIp;
+            document.getElementById('display-public-ip').textContent = cfg.publicIp || cfg.homeIp;
+            document.getElementById('onboarding').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
             renderCards();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const cfg = getConfig();
+            if (cfg.setupDone) {
+                showApp();
+            }
+            // else: onboarding is visible by default
         });
     </script>
 </body>
