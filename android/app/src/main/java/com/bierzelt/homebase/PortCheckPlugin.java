@@ -16,24 +16,29 @@ public class PortCheckPlugin extends Plugin {
     public void check(PluginCall call) {
         String host = call.getString("host");
         Integer port = call.getInt("port");
-        Integer timeout = call.getInt("timeout", 3000);
+        int timeout = call.getInt("timeout", 3000);
 
         if (host == null || port == null) {
             call.reject("host and port required");
             return;
         }
 
-        execute(() -> {
+        final String h = host;
+        final int p = port;
+        final int t = timeout;
+
+        new Thread(() -> {
+            boolean isOpen = false;
             try (Socket socket = new Socket()) {
-                socket.connect(new InetSocketAddress(host, port), timeout);
-                JSObject ret = new JSObject();
-                ret.put("open", true);
-                call.resolve(ret);
+                socket.connect(new InetSocketAddress(h, p), t);
+                isOpen = true;
             } catch (Exception e) {
-                JSObject ret = new JSObject();
-                ret.put("open", false);
-                call.resolve(ret);
+                isOpen = false;
             }
-        });
+            final boolean result = isOpen;
+            JSObject ret = new JSObject();
+            ret.put("open", result);
+            call.resolve(ret);
+        }).start();
     }
 }
