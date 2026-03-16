@@ -18,9 +18,9 @@
   },
   "homepage": "https://github.com/bierzelt-kind/homebase-pwa#readme",
   "dependencies": {
+    "@capacitor-community/http": "^1.4.1",
     "@capacitor/android": "^8.2.0",
     "@capacitor/cli": "^8.2.0",
-    "@capacitor/core": "^8.2.0",
-    "@capacitor/http": "^0.0.2"
+    "@capacitor/core": "^8.2.0"
   }
 }

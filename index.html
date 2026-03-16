@@ -457,13 +457,11 @@
             if (!dot || !card) return false;
             dot.className = 'status-dot checking';
             try {
-                // Native HTTP via Capacitor Plugin — kein WebView/CORS Problem!
+                // Native HTTP via @capacitor-community/http — kein WebView/CORS!
                 if (window.Capacitor && window.Capacitor.Plugins.Http) {
                     await Capacitor.Plugins.Http.request({
                         url: `http://${currentIp}:${s.port}`,
-                        method: 'GET',
-                        connectTimeout: 4000,
-                        readTimeout: 4000
+                        method: 'GET'
                     });
                 } else {
                     // Fallback für Browser/Dev
