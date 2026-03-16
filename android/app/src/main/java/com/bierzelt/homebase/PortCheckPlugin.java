@@ -4,12 +4,10 @@ import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
-import com.getcapacitor.annotation.CapacitorPlugin;
 
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
-@CapacitorPlugin(name = "PortCheck")
 public class PortCheckPlugin extends Plugin {
 
     @PluginMethod()
@@ -31,7 +29,7 @@ public class PortCheckPlugin extends Plugin {
                 sock.close();
                 open = true;
             } catch (Exception e) {
-                open = false;
+                // port closed or timeout
             }
             final boolean result = open;
             getActivity().runOnUiThread(() -> {
