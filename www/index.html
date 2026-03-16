@@ -457,14 +457,32 @@
             if (!dot || !card) return false;
             dot.className = 'status-dot checking';
             try {
-                const ctrl = new AbortController();
-                const t = setTimeout(() => ctrl.abort(), 4000);
-                // Kein mode: 'no-cors' — im Capacitor Android WebView geht echter HTTP-Check!
-                await fetch(`http://${currentIp}:${s.port}`, { signal: ctrl.signal });
-                clearTimeout(t);
-                dot.className = 'status-dot up';
-                card.classList.remove('offline');
-                return true;
+                let isOpen = false;
+                // Native TCP Socket Check — kein HTTP nötig!
+                if (window.Capacitor && window.Capacitor.Plugins.PortCheck) {
+                    const result = await window.Capacitor.Plugins.PortCheck.check({
+                        host: currentIp,
+                        port: s.port,
+                        timeout: 4000
+                    });
+                    isOpen = result.open;
+                } else {
+                    // Fallback: fetch für Browser/Dev-Modus
+                    const ctrl = new AbortController();
+                    const t = setTimeout(() => ctrl.abort(), 4000);
+                    await fetch(`http://${currentIp}:${s.port}`, { signal: ctrl.signal });
+                    clearTimeout(t);
+                    isOpen = true;
+                }
+                if (isOpen) {
+                    dot.className = 'status-dot up';
+                    card.classList.remove('offline');
+                    return true;
+                } else {
+                    dot.className = 'status-dot down';
+                    card.classList.add('offline');
+                    return false;
+                }
             } catch {
                 dot.className = 'status-dot down';
                 card.classList.add('offline');
