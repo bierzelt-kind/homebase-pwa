@@ -42,6 +42,10 @@
         .service-card:active { transform: scale(.97); }
         .service-name { font-size: 14px; font-weight: 600; }
         .service-url { font-size: 12px; opacity: .5; font-family: var(--mono); }
+        /* JellyHub PornHub Style 😏 */
+        .service-card.jellyhub { background: #000; border-left: none !important; border: 2px solid #ff9000; border-radius: 10px; overflow: hidden; }
+        .service-card.jellyhub .service-name { color: #ff9000; font-weight: 800; font-style: italic; letter-spacing: -0.5px; }
+        .service-card.jellyhub .service-name span { background: #ff9000; color: #000; padding: 1px 6px; border-radius: 4px; margin-left: 2px; font-style: normal; }
         .status-dot { width: 12px; height: 12px; border-radius: 50%; background: #555; flex-shrink: 0; margin-left: auto; }
     </style>
 </head>
@@ -96,7 +100,7 @@
             { id: 'openwrt',  name: 'OpenWrt',       port: 80,    icon: '📡', color: '#00b5e2' },
             { id: 'uptime',   name: 'UptimeKuma',    port: 3001,  icon: '📊', color: '#5cdd8b' },
             { id: 'nextcloud',name: 'Nextcloud',     port: 443,   icon: '☁️', color: '#0082c9' },
-            { id: 'jellyfin', name: 'Jellyfin',      port: 8096,  icon: '🎬', color: '#00a4dc' },
+            { id: 'jellyhub', name: 'JellyHub',       port: 8096,  icon: '🎬', color: '#ff9000' },
         ];
 
         let currentMode = 'home'; // 'home' or 'public'
@@ -156,13 +160,23 @@
             services.forEach(s => {
                 const card = document.createElement('div');
                 card.className = 'service-card';
-                card.style.borderLeft = `4px solid ${s.color}`;
-                card.innerHTML = `
-                    <div class="service-info">
-                        <div class="service-name">${s.icon} ${s.name}</div>
-                        <div class="service-url">${ip}:${s.port}</div>
-                    </div>
-                    <div class="status-dot"></div>`;
+                if (s.id === 'jellyhub') {
+                    card.className += ' jellyhub';
+                    card.innerHTML = `
+                        <div class="service-info">
+                            <div class="service-name">Jelly<span>Hub</span></div>
+                            <div class="service-url">${ip}:${s.port}</div>
+                        </div>
+                        <div class="status-dot"></div>`;
+                } else {
+                    card.style.borderLeft = `4px solid ${s.color}`;
+                    card.innerHTML = `
+                        <div class="service-info">
+                            <div class="service-name">${s.icon} ${s.name}</div>
+                            <div class="service-url">${ip}:${s.port}</div>
+                        </div>
+                        <div class="status-dot"></div>`;
+                }
                 card.onclick = () => openService(s);
                 grid.appendChild(card);
             });
