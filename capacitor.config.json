@@ -1,5 +1,9 @@
 {
-  "appId": "com.bierzelt.homebase",
-  "appName": "HomeBase",
-  "webDir": "www"
+    "appId": "com.bierzelt.homebase",
+    "appName": "HomeBase",
+    "webDir": "www",
+    "server": {
+        "cleartext": true,
+        "allowNavigation": ["192.168.*", "100.*", "10.*", "172.*"]
+    }
 }
