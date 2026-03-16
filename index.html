@@ -20,7 +20,7 @@
             --card-bg: rgba(255,255,255,0.8); --card-border: rgba(0,0,0,0.1);
             --text: #1a1a2e; --text-dim: rgba(0,0,0,0.5);
         }
-        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             min-height: 100vh; color: var(--text);
@@ -63,6 +63,7 @@
             transition: transform 0.1s, background 0.2s; height: 120px;
         }
         .card:active { transform: scale(0.96); }
+        .card.disabled { opacity: 0.5; pointer-events: none; filter: grayscale(0.5); }
         .icon-box { font-size: 2rem; margin-bottom: 6px; }
         .card span { font-weight: 600; font-size: 0.9rem; }
         .card small { font-size: 0.7rem; color: var(--text-dim); margin-top: 2px; }
@@ -143,13 +144,24 @@
         function renderCards() {
             const grid = document.getElementById('service-grid');
             grid.innerHTML = SERVICES.map(s => `
-                <a href="http://${currentIp}:${s.port}" class="card" id="card-${s.id}">
+                <a href="http://${currentIp}:${s.port}" class="card" id="card-${s.id}" onclick="return safeNav(event, '${s.id}')">
                     <div class="status-dot checking" id="dot-${s.id}"></div>
                     <div class="icon-box">${s.icon}</div>
                     <span>${s.name}</span>
                     <small>${s.desc}</small>
                 </a>
             `).join('');
+        }
+        
+        // Prevent double navigation
+        let lastNav = 0;
+        function safeNav(e, id) {
+            const now = Date.now();
+            if (now - lastNav < 500) { e.preventDefault(); return false; }
+            const card = document.getElementById(`card-${id}`);
+            if (card.classList.contains('disabled')) { e.preventDefault(); return false; }
+            lastNav = now;
+            return true;
         }
         
         // Check service status
@@ -167,9 +179,11 @@
                     await fetch(`http://${currentIp}:${s.port}`, { mode: 'no-cors', signal: ctrl.signal });
                     clearTimeout(timeout);
                     dot.className = 'status-dot up';
+                    document.getElementById(`card-${s.id}`).classList.remove('disabled');
                     online++;
                 } catch {
                     dot.className = 'status-dot down';
+                    document.getElementById(`card-${s.id}`).classList.add('disabled');
                 }
             }
             
@@ -229,6 +243,11 @@
         
         // Service Worker
         if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+        
+        // Settings: check status when opened
+        document.querySelector('.settings details').addEventListener('toggle', function() {
+            if (this.open) checkStatus();
+        });
         
         renderCards();
         mode('local');
