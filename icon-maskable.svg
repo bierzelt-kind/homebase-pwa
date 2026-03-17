@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="0" fill="#0a0a0a"/>
+  <!-- LAN Cable (centered for maskable safe zone) -->
+  <path d="M60 210 L150 210 L150 240 L200 240 L200 210 L310 210 L310 260 L380 260 L380 302 L310 302 L310 340 L200 340 L200 302 L150 302 L150 270 L60 270 Z" fill="#ff9000" opacity="0.9"/>
+  <path d="M70 230 L130 230 L130 250 L200 250 L200 220 L300 220 L300 270 L370 270 L370 292 L300 292 L300 330 L200 330 L200 292 L130 292 L130 270 L70 270 Z" fill="#0a0a0a"/>
+  <!-- Colored wires -->
+  <rect x="78" y="235" width="45" height="5" rx="2.5" fill="#e74c3c"/>
+  <rect x="78" y="244" width="45" height="5" rx="2.5" fill="#3498db"/>
+  <rect x="78" y="253" width="45" height="5" rx="2.5" fill="#2ecc71"/>
+  <rect x="78" y="262" width="45" height="5" rx="2.5" fill="#f1c40f"/>
+  <rect x="208" y="225" width="5" height="30" rx="2.5" fill="#e74c3c"/>
+  <rect x="217" y="225" width="5" height="30" rx="2.5" fill="#3498db"/>
+  <rect x="226" y="225" width="5" height="30" rx="2.5" fill="#2ecc71"/>
+  <rect x="235" y="225" width="5" height="30" rx="2.5" fill="#f1c40f"/>
+  <rect x="308" y="265" width="5" height="28" rx="2.5" fill="#e74c3c"/>
+  <rect x="317" y="265" width="5" height="28" rx="2.5" fill="#3498db"/>
+  <rect x="326" y="265" width="5" height="28" rx="2.5" fill="#2ecc71"/>
+  <rect x="335" y="265" width="5" height="28" rx="2.5" fill="#f1c40f"/>
+  <rect x="155" y="290" width="55" height="5" rx="2.5" fill="#e74c3c"/>
+  <rect x="155" y="299" width="55" height="5" rx="2.5" fill="#3498db"/>
+  <rect x="155" y="308" width="55" height="5" rx="2.5" fill="#2ecc71"/>
+  <rect x="155" y="317" width="55" height="5" rx="2.5" fill="#f1c40f"/>
+  <!-- RJ45 plugs -->
+  <rect x="40" y="205" width="28" height="80" rx="5" fill="#333" stroke="#ff9000" stroke-width="2.5"/>
+  <rect x="444" y="250" width="28" height="80" rx="5" fill="#333" stroke="#ff9000" stroke-width="2.5"/>
+  <!-- Text -->
+  <text x="256" y="410" text-anchor="middle" font-family="'SF Pro Rounded','Segoe UI',sans-serif" font-size="48" font-weight="900" fill="#ff9000">LanDash</text>
+  <text x="256" y="448" text-anchor="middle" font-family="'SF Pro Rounded','Segoe UI',sans-serif" font-size="20" fill="#666">Server Dashboard</text>
+</svg>
