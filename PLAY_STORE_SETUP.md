@@ -1,4 +1,4 @@
-# 🏠 HomeBase - Play Store Setup Guide
+# 🏠 LanDash - Play Store Setup Guide
 
 ## Was noch fehlt
 
@@ -12,11 +12,11 @@
 ```bash
 # Terminal-Befehl:
 keytool -genkey -v \
-  -keystore homebase-release.jks \
+  -keystore landash-release.jks \
   -keyalg RSA \
   -keysize 2048 \
   -validity 10000 \
-  -alias homebase
+  -alias landash
 ```
 
 ⚠️ **Merke dir das Passwort!**
@@ -27,18 +27,18 @@ In GitHub → Repo → Settings → Secrets → Actions:
 
 | Secret Name | Wert |
 |---|---|
-| `KEYSTORE_BASE64` | `base64 -w0 homebase-release.jks` (Ausgabe dieses Befehls) |
+| `KEYSTORE_BASE64` | `base64 -w0 landash-release.jks` (Ausgabe dieses Befehls) |
 | `KEYSTORE_PASSWORD` | Dein Keystore-Passwort |
-| `KEY_ALIAS` | `homebase` |
+| `KEY_ALIAS` | `landash` |
 | `KEY_PASSWORD` | Dein Key-Passwort |
 
 ### 4. Play Store Listing vorbereiten
 
 **App-Beschreibung (DE):**
 ```
-HomeBase - Dein Smart Home Dashboard
+LanDash - Dein Smart Home Dashboard
 
-Verwalte alle deine lokalen Services an einem Ort. HomeBase zeigt dir den Status deiner Smart Home Geräte, Media Server und mehr auf einen Blick an.
+Verwalte alle deine lokalen Services an einem Ort. LanDash zeigt dir den Status deiner Smart Home Geräte, Media Server und mehr auf einen Blick an.
 
 ✨ Features:
 • Übersichtliches Dashboard mit Status-Anzeige
@@ -51,9 +51,9 @@ Verwalte alle deine lokalen Services an einem Ort. HomeBase zeigt dir den Status
 
 **App-Beschreibung (EN):**
 ```
-HomeBase - Your Smart Home Dashboard
+LanDash - Your Smart Home Dashboard
 
-Manage all your local services in one place. HomeBase shows the status of your Smart Home devices, media servers and more at a glance.
+Manage all your local services in one place. LanDash shows the status of your Smart Home devices, media servers and more at a glance.
 
 ✨ Features:
 • Clean dashboard with live status indicators
@@ -76,7 +76,7 @@ Nach dem APK-Install auf dem Handy:
 ### 6. Privacy Policy URL
 
 Sobald die GitHub Pages Seite live ist:
-https://bierzelt-kind.github.io/homebase-pwa/privacy.html
+https://bierzelt-kind.github.io/landash-pwa/privacy.html
 
 ---
 

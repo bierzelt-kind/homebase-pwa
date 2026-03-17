@@ -1,6 +1,6 @@
 {
     "appId": "com.bierzelt.homebase",
-    "appName": "HomeBase",
+    "appName": "LanDash",
     "webDir": "www",
     "server": {
         "cleartext": true,
