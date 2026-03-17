@@ -41,8 +41,8 @@
         .ip-switch button.active { border-color: var(--orange); background: rgba(255,144,0,.15); }
         .ip-switch button .ip-label { font-weight: 700; display: block; margin-bottom: 2px; }
         .ip-switch button .ip-value { font-family: var(--mono); font-size: 11px; color: #888; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px 20px; }
-        .service-card { background: var(--card); border-radius: 14px; padding: 16px 18px; display: flex; align-items: center; cursor: pointer; transition: .15s; border-left: 4px solid transparent; position: relative; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px 20px; overflow-x: hidden; }
+        .service-card { background: var(--card); border-radius: 14px; padding: 16px 18px; display: flex; align-items: center; cursor: pointer; transition: .15s; border-left: 4px solid transparent; position: relative; overflow-x: hidden; max-width: 100%; box-sizing: border-box; }
         .service-card:active { transform: scale(.97); }
         .service-name { font-size: 14px; font-weight: 700; }
         .service-url { font-size: 12px; color: #666; font-family: var(--mono); }
@@ -106,7 +106,7 @@
         .grid.delete-mode .service-card::after { content: '✕'; position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; background: var(--danger); color: #fff; border-radius: 50%; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
-<body>
+<body style="overflow-x:hidden;">
     <div class="safe-top"></div>
 
     <!-- ONBOARDING -->
@@ -349,9 +349,11 @@
         }
         function deleteService(id) {
             const cfg = getConfig();
-            if (!confirm('Service wirklich entfernen?')) return;
             cfg.services = cfg.services.filter(s => s.id !== id);
             saveConfig(cfg);
+            deleteMode = false;
+            document.getElementById('delete-mode-btn').style.borderColor = '#444';
+            document.getElementById('delete-mode-btn').style.color = '#fff';
             renderCards();
         }
 
@@ -499,16 +501,13 @@
 
         // ===== PORT SCANNER =====
         let scanAbortController = null;
-        const scanPorts = [80, 443, 8080, 8123, 8443, 3000, 5000, 9000];
+        const scanPorts = [80, 443, 3000, 5000, 8080, 8123, 8443, 9000, 9090, 32400, 8181, 7878, 8989, 6789, 5055, 8096, 8200, 8920, 2342, 1880];
 
         async function startPortScan() {
             const cfg = getConfig();
             const baseIp = (currentMode === 'home' ? cfg.homeIp : cfg.publicIp);
             if (!baseIp) { alert('Bitte zuerst eine IP-Adresse in den Einstellungen eingeben!'); return; }
-            // Extract subnet (everything before last octet)
-            const parts = baseIp.split('.');
-            if (parts.length !== 4) { alert('Ungültige IP-Adresse!'); return; }
-            const subnet = parts.slice(0, 3).join('.');
+            const ip = baseIp.trim();
 
             // Set up UI
             const btn = document.getElementById('scan-btn');
@@ -523,58 +522,47 @@
             const signal = scanAbortController.signal;
             const found = [];
             let scanned = 0;
-            const total = 254 * scanPorts.length;
+            const total = scanPorts.length;
 
-            // Scan with concurrency limit
-            const concurrency = 20;
-            const queue = [];
-            for (let octet = 1; octet <= 254; octet++) {
-                for (const port of scanPorts) {
-                    queue.push({ ip: `${subnet}.${octet}`, port });
-                }
-            }
-
-            async function checkHost(ip, port) {
-                if (signal.aborted) return;
-                const proto = port === 443 || port === 8443 ? 'https' : 'http';
-                const controller = new AbortController();
-                const timeout = setTimeout(() => controller.abort(), 500);
-                try {
-                    const resp = await fetch(`${proto}://${ip}:${port}/`, {
-                        method: 'HEAD',
-                        signal: controller.signal,
-                        mode: 'no-cors'
-                    });
-                    // no-cors returns opaque, but no error means reachable
-                    found.push({ ip, port });
-                } catch (e) {
-                    // unreachable
-                } finally {
-                    clearTimeout(timeout);
-                    scanned++;
-                    const pct = Math.round((scanned / total) * 100);
-                    document.getElementById('scan-bar').style.width = pct + '%';
-                    document.getElementById('scan-status').textContent = `Scanne ${ip}:${port} (${pct}%)`;
-                }
-            }
-
-            // Process queue with concurrency
+            // Scan each port on the single IP
+            const concurrency = 10;
             let idx = 0;
-            async function worker() {
-                while (idx < queue.length && !signal.aborted) {
-                    const { ip, port } = queue[idx++];
-                    await checkHost(ip, port);
+
+            async function checkPort() {
+                while (idx < scanPorts.length && !signal.aborted) {
+                    const port = scanPorts[idx++];
+                    if (signal.aborted) return;
+                    const proto = port === 443 || port === 8443 ? 'https' : 'http';
+                    const controller = new AbortController();
+                    const timeout = setTimeout(() => controller.abort(), 800);
+                    try {
+                        await fetch(`${proto}://${ip}:${port}/`, {
+                            method: 'HEAD',
+                            signal: controller.signal,
+                            mode: 'no-cors'
+                        });
+                        found.push({ ip, port });
+                    } catch (e) {
+                        // unreachable
+                    } finally {
+                        clearTimeout(timeout);
+                        scanned++;
+                        const pct = Math.round((scanned / total) * 100);
+                        document.getElementById('scan-bar').style.width = pct + '%';
+                        document.getElementById('scan-status').textContent = `Port ${port} (${pct}%)`;
+                    }
                 }
             }
+
             const workers = [];
-            for (let i = 0; i < concurrency; i++) workers.push(worker());
+            for (let i = 0; i < concurrency; i++) workers.push(checkPort());
             await Promise.all(workers);
 
             // Done
             scanAbortController = null;
             btn.textContent = '🔍 Netzwerk scannen';
             btn.onclick = startPortScan;
-            document.getElementById('scan-status').textContent = signal.aborted ? 'Abgebrochen.' : `Fertig! ${found.length} Service(s) gefunden.`;
+            document.getElementById('scan-status').textContent = signal.aborted ? 'Abgebrochen.' : `Fertig! ${found.length} Service(s) auf ${ip} gefunden.`;
 
             // Render results
             const resultsDiv = document.getElementById('scan-results');
