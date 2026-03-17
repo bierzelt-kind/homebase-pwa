@@ -103,7 +103,7 @@
         /* ===== DELETE MODE ===== */
         .grid.delete-mode .service-card { animation: wiggle 0.3s infinite alternate; }
         @keyframes wiggle { 0% { transform: rotate(-1deg); } 100% { transform: rotate(1deg); } }
-        .grid.delete-mode .service-card::after { content: '✕'; position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; background: var(--danger); color: #fff; border-radius: 50%; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+        .grid.delete-mode .service-card::after { content: '✕'; position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; background: var(--danger); color: #fff; border-radius: 50%; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; pointer-events: none; }
     </style>
 </head>
 <body style="overflow-x:hidden;">
@@ -343,8 +343,10 @@
         // ===== DELETE MODE =====
         function toggleDeleteMode() {
             deleteMode = !deleteMode;
-            document.getElementById('delete-mode-btn').style.borderColor = deleteMode ? '#e74c3c' : '#444';
-            document.getElementById('delete-mode-btn').style.color = deleteMode ? '#e74c3c' : '#fff';
+            const btn = document.getElementById('delete-mode-btn');
+            btn.style.borderColor = deleteMode ? '#e74c3c' : '#444';
+            btn.style.color = deleteMode ? '#e74c3c' : '#fff';
+            btn.innerHTML = deleteMode ? '✅ FERTIG' : '🗑️';
             renderCards();
         }
         function deleteService(id) {
@@ -352,8 +354,10 @@
             cfg.services = cfg.services.filter(s => s.id !== id);
             saveConfig(cfg);
             deleteMode = false;
-            document.getElementById('delete-mode-btn').style.borderColor = '#444';
-            document.getElementById('delete-mode-btn').style.color = '#fff';
+            const btn = document.getElementById('delete-mode-btn');
+            btn.style.borderColor = '#444';
+            btn.style.color = '#fff';
+            btn.innerHTML = '🗑️';
             renderCards();
         }
 
@@ -499,9 +503,9 @@
             setTimeout(() => openAddService(), 200);
         }
 
-        // ===== PORT SCANNER =====
-        let scanAbortController = null;
+        // Port scanner via WebSocket (fetch blocked by Mixed Content from HTTPS→HTTP)
         const scanPorts = [80, 443, 3000, 5000, 8080, 8123, 8443, 9000, 9090, 32400, 8181, 7878, 8989, 6789, 5055, 8096, 8200, 8920, 2342, 1880];
+        let scanAbortController = null;
 
         async function startPortScan() {
             const cfg = getConfig();
@@ -509,7 +513,6 @@
             if (!baseIp) { alert('Bitte zuerst eine IP-Adresse in den Einstellungen eingeben!'); return; }
             const ip = baseIp.trim();
 
-            // Set up UI
             const btn = document.getElementById('scan-btn');
             btn.textContent = '⏹️ Scan abbrechen';
             btn.onclick = cancelPortScan;
@@ -523,8 +526,8 @@
             const found = [];
             let scanned = 0;
             const total = scanPorts.length;
+            let wsWorked = false;
 
-            // Scan each port on the single IP
             const concurrency = 10;
             let idx = 0;
 
@@ -532,25 +535,20 @@
                 while (idx < scanPorts.length && !signal.aborted) {
                     const port = scanPorts[idx++];
                     if (signal.aborted) return;
-                    const proto = port === 443 || port === 8443 ? 'https' : 'http';
-                    const controller = new AbortController();
-                    const timeout = setTimeout(() => controller.abort(), 800);
                     try {
-                        await fetch(`${proto}://${ip}:${port}/`, {
-                            method: 'HEAD',
-                            signal: controller.signal,
-                            mode: 'no-cors'
+                        await new Promise((resolve, reject) => {
+                            const ws = new WebSocket(`ws://${ip}:${port}/`);
+                            const timer = setTimeout(() => { try { ws.close(); } catch(e){} reject(); }, 600);
+                            ws.onopen = () => { clearTimeout(timer); wsWorked = true; try { ws.close(); } catch(e){} resolve(); };
+                            ws.onerror = () => { clearTimeout(timer); reject(); };
+                            ws.onclose = () => { clearTimeout(timer); reject(); };
                         });
                         found.push({ ip, port });
-                    } catch (e) {
-                        // unreachable
-                    } finally {
-                        clearTimeout(timeout);
-                        scanned++;
-                        const pct = Math.round((scanned / total) * 100);
-                        document.getElementById('scan-bar').style.width = pct + '%';
-                        document.getElementById('scan-status').textContent = `Port ${port} (${pct}%)`;
-                    }
+                    } catch(e) { /* port closed */ }
+                    scanned++;
+                    const pct = Math.round((scanned / total) * 100);
+                    document.getElementById('scan-bar').style.width = pct + '%';
+                    document.getElementById('scan-status').textContent = `Port ${port} (${pct}%)`;
                 }
             }
 
@@ -558,32 +556,71 @@
             for (let i = 0; i < concurrency; i++) workers.push(checkPort());
             await Promise.all(workers);
 
-            // Done
             scanAbortController = null;
             btn.textContent = '🔍 Netzwerk scannen';
             btn.onclick = startPortScan;
             document.getElementById('scan-status').textContent = signal.aborted ? 'Abgebrochen.' : `Fertig! ${found.length} Service(s) auf ${ip} gefunden.`;
 
-            // Render results
             const resultsDiv = document.getElementById('scan-results');
             resultsDiv.innerHTML = '';
-            if (found.length === 0 && !signal.aborted) {
-                resultsDiv.innerHTML = '<p style="color:#888;font-size:13px;text-align:center;">Keine Services gefunden.</p>';
-                return;
+
+            // Show found services
+            if (!signal.aborted && found.length > 0) {
+                found.forEach(f => {
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #222;';
+                    const name = guessServiceName(f.port);
+                    row.innerHTML = `
+                        <span style="font-size:20px;">${name.icon}</span>
+                        <div style="flex:1;">
+                            <div style="font-weight:600;font-size:13px;">${f.ip}:${f.port}</div>
+                            <div style="font-size:11px;color:#888;">${name.label}</div>
+                        </div>
+                        <button onclick="addScannedService('${f.ip}', ${f.port}, '${name.label}', '${name.icon}')" style="background:var(--orange);color:#000;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;">➕ Hinzufügen</button>`;
+                    resultsDiv.appendChild(row);
+                });
             }
-            found.forEach(f => {
-                const row = document.createElement('div');
-                row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #222;';
-                const name = guessServiceName(f.port);
-                row.innerHTML = `
-                    <span style="font-size:20px;">${name.icon}</span>
-                    <div style="flex:1;">
-                        <div style="font-weight:600;font-size:13px;">${f.ip}:${f.port}</div>
-                        <div style="font-size:11px;color:#888;">${name.label}</div>
-                    </div>
-                    <button onclick="addScannedService('${f.ip}', ${f.port}, '${name.label}', '${name.icon}')" style="background:var(--orange);color:#000;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;">➕ Hinzufügen</button>`;
-                resultsDiv.appendChild(row);
+
+            // Always show quick-add as fallback (WebSocket also blocked on some browsers)
+            const quickAddPorts = [
+                { port: 8123, label: 'Home Assistant', icon: '🏠' },
+                { port: 32400, label: 'Plex', icon: '🎬' },
+                { port: 8989, label: 'Sonarr', icon: '📺' },
+                { port: 7878, label: 'Radarr', icon: '🎥' },
+                { port: 6789, label: 'NZBGet', icon: '📦' },
+                { port: 9091, label: 'Transmission', icon: '⬇️' },
+                { port: 8080, label: 'Webserver', icon: '🌐' },
+                { port: 8096, label: 'Jellyfin', icon: '🎞️' },
+                { port: 5055, label: 'Overseerr', icon: '📋' },
+                { port: 80, label: 'HTTP', icon: '🌐' },
+                { port: 443, label: 'HTTPS', icon: '🔒' },
+                { port: 8443, label: 'HTTPS Alt', icon: '🔒' },
+                { port: 3000, label: 'Node.js', icon: '🟢' },
+                { port: 5000, label: 'Dev Server', icon: '🛠️' },
+                { port: 8181, label: 'Service', icon: '🔌' },
+                { port: 9000, label: 'Service', icon: '🔌' },
+                { port: 9090, label: 'Prometheus', icon: '📊' },
+                { port: 8200, label: 'Traefik', icon: '🔀' },
+                { port: 8920, label: 'Emby', icon: '🎞️' },
+                { port: 2342, label: 'Grafana', icon: '📈' },
+                { port: 1880, label: 'Node-RED', icon: '🔴' }
+            ];
+
+            const fallbackTitle = document.createElement('div');
+            fallbackTitle.style.cssText = 'margin-top:16px;font-size:13px;color:#888;text-align:center;';
+            fallbackTitle.textContent = wsWorked ? 'Oder schnell hinzufügen:' : 'Scan blockiert (Mixed Content). Services direkt hinzufügen:';
+            resultsDiv.appendChild(fallbackTitle);
+
+            const quickGrid = document.createElement('div');
+            quickGrid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;';
+            quickAddPorts.forEach(p => {
+                const b = document.createElement('button');
+                b.style.cssText = 'background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:10px;cursor:pointer;text-align:left;color:var(--text);font-size:13px;';
+                b.innerHTML = `${p.icon} <strong>${p.label}</strong><br><span style="color:#888;font-size:11px;">Port ${p.port}</span>`;
+                b.onclick = () => addScannedService(ip, p.port, p.label, p.icon);
+                quickGrid.appendChild(b);
             });
+            resultsDiv.appendChild(quickGrid);
         }
 
         function cancelPortScan() {
@@ -594,12 +631,25 @@
             const map = {
                 80:   { label: 'Webserver (HTTP)', icon: '🌐' },
                 443:  { label: 'Webserver (HTTPS)', icon: '🔒' },
-                8080: { label: 'Webserver Alt', icon: '🌐' },
-                8123: { label: 'Home Assistant', icon: '🏠' },
-                8443: { label: 'Secure Web', icon: '🔒' },
                 3000: { label: 'Node.js / AdGuard', icon: '🛡️' },
                 5000: { label: 'Dev Server', icon: '🛠️' },
-                9000: { label: 'Service', icon: '🔌' }
+                5055: { label: 'Overseerr', icon: '📋' },
+                6789: { label: 'NZBGet', icon: '📦' },
+                7878: { label: 'Radarr', icon: '🎥' },
+                8080: { label: 'Webserver Alt', icon: '🌐' },
+                8096: { label: 'Jellyfin', icon: '🎞️' },
+                8123: { label: 'Home Assistant', icon: '🏠' },
+                8181: { label: 'Service', icon: '🔌' },
+                8200: { label: 'Traefik', icon: '🔀' },
+                8443: { label: 'Secure Web', icon: '🔒' },
+                8920: { label: 'Emby', icon: '🎞️' },
+                8989: { label: 'Sonarr', icon: '📺' },
+                9000: { label: 'Service', icon: '🔌' },
+                9090: { label: 'Prometheus', icon: '📊' },
+                9091: { label: 'Transmission', icon: '⬇️' },
+                2342: { label: 'Grafana', icon: '📈' },
+                1880: { label: 'Node-RED', icon: '🔴' },
+                32400: { label: 'Plex', icon: '🎬' }
             };
             return map[port] || { label: `Port ${port}`, icon: '🔌' };
         }
