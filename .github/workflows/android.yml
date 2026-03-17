@@ -28,12 +28,42 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Build APK
-        run: cd android && chmod +x gradlew && ./gradlew assembleDebug
+      - name: Decode Keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: echo "$KEYSTORE_BASE64" | base64 -d > android/app/landash-release.jks
 
-      - name: Upload APK
+      - name: Build Signed APK
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleRelease \
+            -Pandroid.injected.signing.store.file=$(pwd)/app/landash-release.jks \
+            -Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD \
+            -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
+            -Pandroid.injected.signing.key.password=$KEY_PASSWORD
+
+      - name: Upload Signed APK
         uses: actions/upload-artifact@v4
         with:
-          name: homebase-debug-apk
+          name: landash-release-apk
+          path: android/app/build/outputs/apk/release/app-release.apk
+          retention-days: 30
+
+      - name: Upload Debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: landash-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./www
+          keep_files: false
