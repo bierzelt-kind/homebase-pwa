@@ -2,14 +2,14 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+    <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
     <title>JellyHub</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #000; color: #fff; min-height: 100vh; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #000; color: #fff; min-height: 100vh; padding-top: env(safe-area-inset-top, 0px); padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
         :root { --orange: #ff9000; --dark: #000; --card: #1a1a1a; --border: #333; --mono: 'SF Mono', 'Fira Code', monospace; --danger: #e74c3c; }
-        .safe-top { height: env(safe-area-inset-top, 20px); }
+        .safe-top { height: 0; }
         .safe-bottom { height: max(env(safe-area-inset-bottom, 16px), 16px); }
 
         /* ===== ONBOARDING ===== */
@@ -150,7 +150,7 @@
             </button>
         </div>
         <div class="grid" id="grid"></div>
-        <button class="fab" onclick="openAddService()" title="Service hinzufügen">+</button>
+        <!-- FAB removed: Service hinzufügen moved to Settings -->
         <div class="safe-bottom"></div>
     </div>
 
@@ -169,8 +169,19 @@
                 <input type="text" id="set-public-ip" placeholder="meine.duckdns.org" inputmode="url">
             </div>
             <div class="section-title">🔧 Services bearbeiten</div>
+            <button class="save-btn" onclick="openAddServiceFromSettings()" style="margin-bottom:16px;">➕ Service hinzufügen</button>
             <div id="settings-services"></div>
-            <button class="save-btn" onclick="saveSettings()">💾 Speichern</button>
+            <div class="section-title">🔍 Netzwerk-Scanner</div>
+            <p style="font-size:12px;color:#888;margin-bottom:10px;">Scannt das Netzwerk nach erreichbaren Services auf häufigen Ports.</p>
+            <button class="save-btn" id="scan-btn" onclick="startPortScan()">🔍 Netzwerk scannen</button>
+            <div id="scan-progress" style="display:none;margin-top:12px;">
+                <div style="background:#222;border-radius:8px;overflow:hidden;height:20px;">
+                    <div id="scan-bar" style="background:var(--orange);height:100%;width:0%;transition:width .1s;border-radius:8px;"></div>
+                </div>
+                <div id="scan-status" style="font-size:12px;color:#888;margin-top:6px;text-align:center;">Scanne...</div>
+            </div>
+            <div id="scan-results" style="margin-top:12px;"></div>
+            <button class="save-btn" onclick="saveSettings()">💾 Einstellungen speichern</button>
             <button class="reset-btn" onclick="resetAll()">🗑️ Alles zurücksetzen</button>
         </div>
     </div>
@@ -478,6 +489,142 @@
                 localStorage.clear();
                 location.reload();
             }
+        }
+
+        // ===== OPEN ADD SERVICE FROM SETTINGS =====
+        function openAddServiceFromSettings() {
+            closeSettings();
+            setTimeout(() => openAddService(), 200);
+        }
+
+        // ===== PORT SCANNER =====
+        let scanAbortController = null;
+        const scanPorts = [80, 443, 8080, 8123, 8443, 3000, 5000, 9000];
+
+        async function startPortScan() {
+            const cfg = getConfig();
+            const baseIp = (currentMode === 'home' ? cfg.homeIp : cfg.publicIp);
+            if (!baseIp) { alert('Bitte zuerst eine IP-Adresse in den Einstellungen eingeben!'); return; }
+            // Extract subnet (everything before last octet)
+            const parts = baseIp.split('.');
+            if (parts.length !== 4) { alert('Ungültige IP-Adresse!'); return; }
+            const subnet = parts.slice(0, 3).join('.');
+
+            // Set up UI
+            const btn = document.getElementById('scan-btn');
+            btn.textContent = '⏹️ Scan abbrechen';
+            btn.onclick = cancelPortScan;
+            document.getElementById('scan-progress').style.display = 'block';
+            document.getElementById('scan-bar').style.width = '0%';
+            document.getElementById('scan-status').textContent = 'Scanne...';
+            document.getElementById('scan-results').innerHTML = '';
+
+            scanAbortController = new AbortController();
+            const signal = scanAbortController.signal;
+            const found = [];
+            let scanned = 0;
+            const total = 254 * scanPorts.length;
+
+            // Scan with concurrency limit
+            const concurrency = 20;
+            const queue = [];
+            for (let octet = 1; octet <= 254; octet++) {
+                for (const port of scanPorts) {
+                    queue.push({ ip: `${subnet}.${octet}`, port });
+                }
+            }
+
+            async function checkHost(ip, port) {
+                if (signal.aborted) return;
+                const proto = port === 443 || port === 8443 ? 'https' : 'http';
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 500);
+                try {
+                    const resp = await fetch(`${proto}://${ip}:${port}/`, {
+                        method: 'HEAD',
+                        signal: controller.signal,
+                        mode: 'no-cors'
+                    });
+                    // no-cors returns opaque, but no error means reachable
+                    found.push({ ip, port });
+                } catch (e) {
+                    // unreachable
+                } finally {
+                    clearTimeout(timeout);
+                    scanned++;
+                    const pct = Math.round((scanned / total) * 100);
+                    document.getElementById('scan-bar').style.width = pct + '%';
+                    document.getElementById('scan-status').textContent = `Scanne ${ip}:${port} (${pct}%)`;
+                }
+            }
+
+            // Process queue with concurrency
+            let idx = 0;
+            async function worker() {
+                while (idx < queue.length && !signal.aborted) {
+                    const { ip, port } = queue[idx++];
+                    await checkHost(ip, port);
+                }
+            }
+            const workers = [];
+            for (let i = 0; i < concurrency; i++) workers.push(worker());
+            await Promise.all(workers);
+
+            // Done
+            scanAbortController = null;
+            btn.textContent = '🔍 Netzwerk scannen';
+            btn.onclick = startPortScan;
+            document.getElementById('scan-status').textContent = signal.aborted ? 'Abgebrochen.' : `Fertig! ${found.length} Service(s) gefunden.`;
+
+            // Render results
+            const resultsDiv = document.getElementById('scan-results');
+            resultsDiv.innerHTML = '';
+            if (found.length === 0 && !signal.aborted) {
+                resultsDiv.innerHTML = '<p style="color:#888;font-size:13px;text-align:center;">Keine Services gefunden.</p>';
+                return;
+            }
+            found.forEach(f => {
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #222;';
+                const name = guessServiceName(f.port);
+                row.innerHTML = `
+                    <span style="font-size:20px;">${name.icon}</span>
+                    <div style="flex:1;">
+                        <div style="font-weight:600;font-size:13px;">${f.ip}:${f.port}</div>
+                        <div style="font-size:11px;color:#888;">${name.label}</div>
+                    </div>
+                    <button onclick="addScannedService('${f.ip}', ${f.port}, '${name.label}', '${name.icon}')" style="background:var(--orange);color:#000;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;">➕ Hinzufügen</button>`;
+                resultsDiv.appendChild(row);
+            });
+        }
+
+        function cancelPortScan() {
+            if (scanAbortController) scanAbortController.abort();
+        }
+
+        function guessServiceName(port) {
+            const map = {
+                80:   { label: 'Webserver (HTTP)', icon: '🌐' },
+                443:  { label: 'Webserver (HTTPS)', icon: '🔒' },
+                8080: { label: 'Webserver Alt', icon: '🌐' },
+                8123: { label: 'Home Assistant', icon: '🏠' },
+                8443: { label: 'Secure Web', icon: '🔒' },
+                3000: { label: 'Node.js / AdGuard', icon: '🛡️' },
+                5000: { label: 'Dev Server', icon: '🛠️' },
+                9000: { label: 'Service', icon: '🔌' }
+            };
+            return map[port] || { label: `Port ${port}`, icon: '🔌' };
+        }
+
+        function addScannedService(ip, port, label, icon) {
+            const cfg = getConfig();
+            const proto = port === 443 || port === 8443 ? 'https' : 'http';
+            const id = 'scan_' + Date.now();
+            const newSrv = { id, name: label, port, icon, color: '#ff9000', enabled: true, proto };
+            cfg.services.push(newSrv);
+            saveConfig(cfg);
+            // Update settings list
+            openSettings();
         }
 
         // ===== INIT =====
