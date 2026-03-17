@@ -128,6 +128,22 @@
         .image-preview { display: none; align-items: center; gap: 10px; margin-top: 8px; padding: 8px; background: #1a1a1a; border-radius: 10px; }
         .image-preview img { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; }
         .image-preview .remove-img { margin-left: auto; color: var(--danger); cursor: pointer; font-size: 18px; padding: 4px 8px; }
+
+        /* ===== TUTORIAL ===== */
+        #tutorial-overlay { display: none; position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,.88); align-items: center; justify-content: center; }
+        #tutorial-overlay.show { display: flex; }
+        .tutorial-card { background: #111; border: 2px solid var(--orange); border-radius: 20px; padding: 32px 24px; width: 90%; max-width: 360px; text-align: center; position: relative; }
+        .tutorial-step-indicator { display: flex; gap: 6px; justify-content: center; margin-bottom: 20px; }
+        .tutorial-dot { width: 8px; height: 8px; border-radius: 50%; background: #333; }
+        .tutorial-dot.active { background: var(--orange); width: 20px; border-radius: 4px; }
+        .tutorial-icon { font-size: 56px; margin-bottom: 16px; }
+        .tutorial-title { font-size: 20px; font-weight: 800; margin-bottom: 8px; }
+        .tutorial-text { color: var(--text-dim); font-size: 14px; line-height: 1.5; margin-bottom: 24px; }
+        .tutorial-btn { padding: 12px 32px; background: var(--orange); color: #000; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; }
+        .tutorial-btn:active { opacity: 0.85; }
+        .tutorial-skip { display: block; margin-top: 12px; background: none; border: none; color: var(--text-dim); font-size: 13px; cursor: pointer; }
+        .tutorial-highlight { position: fixed; z-index: 199; border: 3px solid var(--orange); border-radius: 18px; pointer-events: none; animation: tut-pulse 1.5s ease-in-out infinite; }
+        @keyframes tut-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(255,144,0,.4); } 50% { box-shadow: 0 0 0 12px rgba(255,144,0,0); } }
     </style>
 </head>
 <body>
@@ -154,7 +170,7 @@
         <h1>🏠 Home<span>Base</span></h1>
         <div class="header-actions">
             <button id="delete-mode-btn" onclick="toggleDeleteMode()" title="Services löschen">🗑️</button>
-            <button onclick="openSettings()" title="Einstellungen">⚙️</button>
+            <button id="settings-btn" onclick="openSettings()" title="Einstellungen">⚙️</button>
         </div>
     </div>
 
@@ -219,6 +235,19 @@
         <button class="btn-save" onclick="addNewService()">✅ Hinzufügen</button>
     </div>
 </div>
+
+<!-- ===== TUTORIAL ===== -->
+<div id="tutorial-overlay">
+    <div class="tutorial-card">
+        <div class="tutorial-step-indicator" id="tutorial-dots"></div>
+        <div class="tutorial-icon" id="tut-icon"></div>
+        <div class="tutorial-title" id="tut-title"></div>
+        <div class="tutorial-text" id="tut-text"></div>
+        <button class="tutorial-btn" id="tut-btn" onclick="tutorialNext()">Weiter →</button>
+        <button class="tutorial-skip" onclick="tutorialSkip()">Überspringen</button>
+    </div>
+</div>
+<div class="tutorial-highlight" id="tut-highlight" style="display:none;"></div>
 
 <!-- ===== SETTINGS MODAL ===== -->
 <div class="overlay" id="settings-overlay" onclick="if(event.target===this)closeSettings()">
@@ -566,12 +595,99 @@ function renderQuickAdd() {
     });
 }
 
+// ===== TUTORIAL =====
+const TUTORIAL_STEPS = [
+    {
+        icon: '🏠',
+        title: 'Willkommen bei HomeBase!',
+        text: 'Dein persönliches Dashboard für alle deine Heim-Services. Alles an einem Ort — schnell erreichbar!',
+        highlight: null
+    },
+    {
+        icon: '➕',
+        title: 'Service hinzufügen',
+        text: 'Tippe auf den ➕ Button unten rechts, um deinen ersten Service hinzuzufügen.',
+        highlight: '.fab'
+    },
+    {
+        icon: '⚡',
+        title: 'Schnell hinzufügen',
+        text: 'Oder öffne ⚙️ Einstellungen → dort findest du vordefinierte Services zum Schnellstart!',
+        highlight: '#settings-btn'
+    },
+    {
+        icon: '🏠',
+        title: 'Home / Öffentlich',
+        text: 'Schwische zwischen Home (Lokales Netzwerk) und Öffentlich (unterwegs) um — deine Services bleiben gleich!',
+        highlight: '.mode-bar'
+    }
+];
+let tutorialStep = 0;
+function tutorialShow() {
+    tutorialStep = 0;
+    renderTutorialStep();
+    document.getElementById('tutorial-overlay').classList.add('show');
+}
+function renderTutorialStep() {
+    const step = TUTORIAL_STEPS[tutorialStep];
+    document.getElementById('tut-icon').textContent = step.icon;
+    document.getElementById('tut-title').textContent = step.title;
+    document.getElementById('tut-text').textContent = step.text;
+    document.getElementById('tut-btn').textContent = tutorialStep < TUTORIAL_STEPS.length - 1 ? 'Weiter →' : '🚀 Los geht\'s!';
+    // Dots
+    const dots = document.getElementById('tutorial-dots');
+    dots.innerHTML = '';
+    TUTORIAL_STEPS.forEach((_, i) => {
+        const d = document.createElement('div');
+        d.className = 'tutorial-dot' + (i === tutorialStep ? ' active' : '');
+        dots.appendChild(d);
+    });
+    // Highlight
+    const hl = document.getElementById('tut-highlight');
+    if (step.highlight) {
+        const el = document.querySelector(step.highlight);
+        if (el) {
+            const r = el.getBoundingClientRect();
+            hl.style.display = 'block';
+            hl.style.left = (r.left - 6) + 'px';
+            hl.style.top = (r.top - 6) + 'px';
+            hl.style.width = (r.width + 12) + 'px';
+            hl.style.height = (r.height + 12) + 'px';
+        }
+    } else {
+        hl.style.display = 'none';
+    }
+}
+function tutorialNext() {
+    tutorialStep++;
+    if (tutorialStep >= TUTORIAL_STEPS.length) {
+        tutorialDone();
+    } else {
+        renderTutorialStep();
+    }
+}
+function tutorialSkip() { tutorialDone(); }
+function tutorialDone() {
+    document.getElementById('tutorial-overlay').classList.remove('show');
+    document.getElementById('tut-highlight').style.display = 'none';
+    localStorage.setItem('hd-tutorial-done', 'true');
+}
+function shouldShowTutorial() {
+    const cfg = getConfig();
+    const tutDone = localStorage.getItem('hd-tutorial-done') === 'true';
+    return cfg.setupDone && !tutDone && cfg.services.filter(s => s.enabled !== false).length === DEFAULT_SERVICES.filter(s => s.enabled !== false).length;
+}
+
 // ===== INIT =====
 function showApp() {
     const cfg = getConfig();
     document.getElementById('onboarding').style.display = 'none';
     document.getElementById('app').style.display = 'block';
     renderCards();
+    // Show tutorial on first launch (when still has default services only)
+    if (shouldShowTutorial()) {
+        setTimeout(tutorialShow, 500);
+    }
 }
 document.addEventListener('DOMContentLoaded', () => {
     const cfg = getConfig();
