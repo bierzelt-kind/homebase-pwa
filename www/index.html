@@ -3,597 +3,585 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
     <title>HomeBase</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
     <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #fff; min-height: 100vh; padding-top: env(safe-area-inset-top, 0px); padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); overflow-x: hidden; }
-        :root { --orange: #ff9000; --dark: #000; --card: #1a1a1a; --border: #333; --mono: 'SF Mono', 'Fira Code', monospace; --danger: #e74c3c; }
-        .safe-top { height: 0; }
-        .safe-bottom { height: max(env(safe-area-inset-bottom, 16px), 16px); }
+        :root { --orange: #ff9000; --dark: #000; --card: #111; --border: #2a2a2a; --danger: #e74c3c; --text: #fff; --text-dim: #888; --radius: 14px; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #000; color: var(--text); min-height: 100vh; min-height: 100dvh; overflow-x: hidden; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+        button { font-family: inherit; }
+        input { font-family: inherit; }
 
         /* ===== ONBOARDING ===== */
-        .onboarding { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; padding: 40px 24px; text-align: center; background: #000; }
-        .onboarding .big-logo { font-size: 80px; margin-bottom: 16px; }
-        .onboarding h1 { font-size: 42px; font-weight: 900; margin-bottom: 4px; }
-        .onboarding h1 .hub { background: var(--orange); color: #000; padding: 2px 10px; border-radius: 6px; font-style: italic; }
-        .onboarding .subtitle { font-size: 16px; color: #888; margin-bottom: 40px; line-height: 1.5; }
-        .onboarding .setup-card { background: var(--card); border: 2px solid var(--orange); border-radius: 16px; padding: 24px; width: 100%; max-width: 360px; text-align: left; }
-        .onboarding .setup-card h2 { font-size: 16px; font-weight: 700; margin-bottom: 16px; text-align: center; color: var(--orange); }
-        .onboarding .field { margin-bottom: 14px; }
-        .onboarding .field label { display: block; font-size: 12px; color: #888; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
-        .onboarding .field input { width: 100%; background: #000; border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; color: #fff; font-family: var(--mono); font-size: 15px; outline: none; }
-        .onboarding .field input:focus { border-color: var(--orange); }
-        .onboarding .field .hint { font-size: 11px; color: #666; margin-top: 4px; }
-        .onboarding .start-btn { width: 100%; background: var(--orange); color: #000; border: none; border-radius: 12px; padding: 14px; font-size: 16px; font-weight: 800; cursor: pointer; margin-top: 8px; transition: .15s; }
-        .onboarding .start-btn:active { transform: scale(.97); opacity: .8; }
+        #onboarding { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; min-height: 100dvh; padding: 32px 24px; text-align: center; }
+        .setup-logo { font-size: 64px; margin-bottom: 12px; }
+        .setup-title { font-size: 32px; font-weight: 800; margin-bottom: 4px; }
+        .setup-title span { color: var(--orange); }
+        .setup-sub { color: var(--text-dim); margin-bottom: 40px; font-size: 16px; }
+        .setup-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; width: 100%; max-width: 380px; }
+        .setup-card h3 { margin-bottom: 16px; font-size: 18px; }
+        .setup-card label { display: block; font-size: 13px; color: var(--text-dim); margin-bottom: 6px; margin-top: 14px; }
+        .setup-card input { width: 100%; padding: 12px 14px; background: #1a1a1a; border: 1px solid #333; border-radius: 10px; color: #fff; font-size: 15px; outline: none; }
+        .setup-card input:focus { border-color: var(--orange); }
+        .btn-primary { display: block; width: 100%; margin-top: 24px; padding: 14px; background: var(--orange); color: #000; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; }
+        .btn-primary:active { opacity: 0.85; }
 
-        /* ===== MAIN APP ===== */
-        .app { display: none; background: #000; min-height: 100vh; min-height: 100dvh; overflow-x: hidden; }
-        .header { padding: 16px 20px 12px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 50; background: rgba(0,0,0,.9); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
-        .header h1 { font-size: 24px; font-weight: 900; }
-        .header h1 .hub { background: var(--orange); color: #000; padding: 1px 8px; border-radius: 5px; font-style: normal; }
+        /* ===== APP SHELL ===== */
+        #app { display: none; }
+        .header { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; position: sticky; top: 0; z-index: 50; background: rgba(0,0,0,.92); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-bottom: 1px solid var(--border); }
+        .header h1 { font-size: 20px; font-weight: 800; }
+        .header h1 span { color: var(--orange); }
         .header-actions { display: flex; gap: 8px; }
-        .header-actions button { background: none; border: 2px solid #444; color: #fff; font-size: 18px; cursor: pointer; padding: 6px 10px; border-radius: 8px; transition: .15s; }
-        .header-actions button:active { border-color: var(--orange); color: var(--orange); }
-        .ip-switch { display: flex; gap: 8px; padding: 0 20px; margin-bottom: 8px; }
-        .ip-switch button { flex: 1; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px; color: #fff; font-size: 12px; cursor: pointer; transition: .15s; }
-        .ip-switch button.active { border-color: var(--orange); background: rgba(255,144,0,.15); }
-        .ip-switch button .ip-label { font-weight: 700; display: block; margin-bottom: 2px; }
-        .ip-switch button .ip-value { font-family: var(--mono); font-size: 11px; color: #888; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px 20px; overflow-x: hidden; }
-        .service-card { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border-radius: 14px; padding: 16px 18px; display: flex; align-items: center; cursor: pointer; transition: .15s; border-left: 4px solid transparent; position: relative; overflow-x: hidden; max-width: 100%; box-sizing: border-box; }
-        .service-card:active { transform: scale(.97); }
-.service-card:hover { transform: scale(1.02); box-shadow: 0 0 15px rgba(255,255,255,0.1); }
-        .service-name { font-size: 14px; font-weight: 700; }
-        .service-url { font-size: 12px; color: #666; font-family: var(--mono); }
-        .status-dot { width: 12px; height: 12px; border-radius: 50%; background: #333; flex-shrink: 0; margin-left: auto; }
-.status-dot.online { animation: pulse 1.5s infinite; }
-@keyframes pulse {
-  0% { transform: scale(1); opacity:1; }
-  50% { transform: scale(1.2); opacity:0.7; }
-  100% { transform: scale(1); opacity:1; }
-}
-        .card-icon { font-size: 32px; margin-right: 12px; }
-        .card-img { width: 32px; height: 32px; object-fit: cover; border-radius: 6px; margin-right: 12px; }
+        .header-actions button { width: 40px; height: 40px; border-radius: 10px; border: 1px solid var(--border); background: #111; color: #fff; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .header-actions button:active { background: #222; }
+        .header-actions button.active-delete { border-color: var(--danger); color: var(--danger); }
 
-        /* ===== ADD SERVICE FAB ===== */
-        .fab { position: fixed; bottom: 30px; right: 20px; width: 56px; height: 56px; background: var(--orange); color: #000; border: none; border-radius: 50%; font-size: 28px; font-weight: 700; cursor: pointer; box-shadow: 0 4px 20px rgba(255,144,0,.4); z-index: 50; transition: .15s; }
-        .fab:active { transform: scale(.9); }
+        /* ===== MODE SWITCH ===== */
+        .mode-bar { display: flex; gap: 8px; padding: 10px 16px; }
+        .mode-bar button { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid var(--border); background: #111; color: var(--text-dim); font-size: 14px; font-weight: 600; cursor: pointer; }
+        .mode-bar button.active { background: var(--orange); color: #000; border-color: var(--orange); }
 
-        /* ===== MODAL OVERLAY ===== */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.85); z-index: 100; overflow-y: auto; padding: 20px; }
-        .modal-overlay.show { display: block; }
-        .modal { background: #111; border: 2px solid var(--orange); border-radius: 16px; max-width: 420px; margin: 20px auto; padding: 24px; position: relative; }
-        .modal h2 { font-size: 20px; font-weight: 900; margin-bottom: 20px; color: var(--orange); text-align: center; }
-        .modal .close-btn { position: absolute; top: 12px; right: 16px; background: none; border: none; color: #fff; font-size: 28px; cursor: pointer; }
-        .modal .section-title { font-size: 13px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 10px; border-bottom: 1px solid #333; padding-bottom: 6px; }
-        .modal .service-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #222; }
-        .modal .service-row:last-child { border-bottom: none; }
-        .modal .service-row .toggle { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
-        .modal .service-row .toggle input { opacity: 0; width: 0; height: 0; }
-        .modal .service-row .toggle .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #333; border-radius: 24px; transition: .2s; }
-        .modal .service-row .toggle .slider:before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: .2s; }
-        .modal .service-row .toggle input:checked + .slider { background: var(--orange); }
-        .modal .service-row .toggle input:checked + .slider:before { transform: translateX(20px); }
-        .modal .service-row .srv-icon { font-size: 24px; flex-shrink: 0; cursor: pointer; }
-        .modal .service-row .srv-name { flex: 1; font-weight: 600; font-size: 14px; }
-        .modal .service-row .port-input { width: 70px; background: #000; border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; color: var(--orange); font-family: var(--mono); font-size: 13px; text-align: center; outline: none; }
-        .modal .service-row .port-input:focus { border-color: var(--orange); }
-        .modal .service-row .delete-btn { background: none; border: none; color: var(--danger); font-size: 18px; cursor: pointer; padding: 4px; flex-shrink: 0; }
-        .modal .ip-field { margin-bottom: 14px; }
-        .modal .ip-field label { display: block; font-size: 12px; color: #888; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
-        .modal .ip-field input { width: 100%; background: #000; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; color: #fff; font-family: var(--mono); font-size: 14px; outline: none; }
-        .modal .ip-field input:focus { border-color: var(--orange); }
-        .modal .input-field { margin-bottom: 14px; }
-        .modal .input-field label { display: block; font-size: 12px; color: #888; margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
-        .modal .input-field input { width: 100%; background: #000; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; color: #fff; font-family: var(--mono); font-size: 14px; outline: none; }
-        .modal .input-field input:focus { border-color: var(--orange); }
-        .modal .save-btn { width: 100%; background: var(--orange); color: #000; border: none; border-radius: 12px; padding: 14px; font-size: 16px; font-weight: 800; cursor: pointer; margin-top: 12px; transition: .15s; }
-        .modal .save-btn:active { transform: scale(.97); opacity: .8; }
-        .modal .reset-btn { width: 100%; background: none; border: 2px solid var(--danger); color: var(--danger); border-radius: 12px; padding: 12px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 16px; transition: .15s; }
-        .modal .reset-btn:active { background: rgba(231,76,60,.15); }
+        /* ===== IP DISPLAY ===== */
+        .ip-bar { padding: 4px 16px 8px; font-size: 12px; color: var(--text-dim); font-family: monospace; }
 
-        /* ===== ICON PICKER ===== */
-        .icon-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 6px; padding: 8px 0; }
-        .icon-grid .icon-btn { font-size: 24px; background: #222; border: 2px solid transparent; border-radius: 8px; padding: 8px; cursor: pointer; transition: .15s; text-align: center; }
-        .icon-grid .icon-btn:active, .icon-grid .icon-btn.selected { border-color: var(--orange); background: rgba(255,144,0,.1); }
-        .image-preview { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
-        .image-preview img { width: 48px; height: 48px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
-        .image-preview .remove-img { background: none; border: none; color: var(--danger); font-size: 14px; cursor: pointer; }
+        /* ===== SERVICE GRID ===== */
+        .grid { display: grid; grid-template-columns: 1fr; gap: 8px; padding: 8px 16px 100px; }
+        @media (min-width: 500px) { .grid { grid-template-columns: 1fr 1fr; } }
+        .card { display: flex; align-items: center; gap: 12px; padding: 14px 16px; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; transition: transform .1s, background .15s; border-left: 4px solid var(--orange); user-select: none; -webkit-user-select: none; }
+        .card:active { transform: scale(0.97); background: #1a1a1a; }
+        .card-icon { font-size: 28px; flex-shrink: 0; width: 36px; text-align: center; }
+        .card-img { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+        .card-info { flex: 1; min-width: 0; }
+        .card-name { font-weight: 700; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-url { font-size: 12px; color: var(--text-dim); font-family: monospace; margin-top: 2px; }
+        .card-status { width: 10px; height: 10px; border-radius: 50%; background: #333; flex-shrink: 0; }
+        .delete-mode .card { border-left-color: var(--danger); }
+        .delete-mode .card:active { background: rgba(231,76,60,0.15); }
 
-        /* ===== COLOR PICKER ===== */
-        .color-row { display: flex; gap: 8px; flex-wrap: wrap; padding: 8px 0; }
-        .color-btn { width: 32px; height: 32px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; transition: .15s; }
-        .color-btn:active, .color-btn.selected { border-color: #fff; transform: scale(1.2); }
+        /* ===== OVERLAY (Modal) ===== */
+        .overlay { display: none; position: fixed; inset: 0; z-index: 100; background: rgba(0,0,0,.7); backdrop-filter: blur(4px); align-items: flex-end; justify-content: center; }
+        .overlay.show { display: flex; }
+        .modal { background: #111; border: 1px solid var(--border); border-bottom: none; border-radius: 20px 20px 0 0; width: 100%; max-width: 480px; max-height: 90vh; overflow-y: auto; padding: 24px 20px 32px; }
+        .modal-handle { width: 36px; height: 4px; background: #444; border-radius: 2px; margin: 0 auto 20px; }
+        .modal h2 { font-size: 20px; margin-bottom: 20px; }
 
-        /* ===== DELETE MODE ===== */
-        .grid.delete-mode .service-card { animation: wiggle 0.3s infinite alternate; }
-        @keyframes wiggle { 0% { transform: rotate(-1deg); } 100% { transform: rotate(1deg); } }
-        .grid.delete-mode .service-card::after { content: '✕'; position: absolute; top: -8px; right: -8px; width: 24px; height: 24px; background: var(--danger); color: #fff; border-radius: 50%; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+        /* ===== FORM ELEMENTS ===== */
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; color: var(--text-dim); margin-bottom: 6px; }
+        .form-group input { width: 100%; padding: 12px 14px; background: #1a1a1a; border: 1px solid #333; border-radius: 10px; color: #fff; font-size: 15px; outline: none; }
+        .form-group input:focus { border-color: var(--orange); }
+        .form-row { display: flex; gap: 10px; }
+        .form-row .form-group { flex: 1; }
+        .proto-btns { display: flex; gap: 8px; }
+        .proto-btn { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #333; background: #1a1a1a; color: #fff; font-size: 14px; cursor: pointer; text-align: center; }
+        .proto-btn.active { background: var(--orange); color: #000; border-color: var(--orange); }
+
+        /* ===== ICON/ COLOR PICKERS ===== */
+        .icon-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .icon-opt { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; font-size: 20px; border-radius: 10px; border: 2px solid transparent; background: #1a1a1a; cursor: pointer; }
+        .icon-opt.selected { border-color: var(--orange); background: #222; }
+        .color-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+        .color-opt { width: 32px; height: 32px; border-radius: 50%; border: 3px solid transparent; cursor: pointer; }
+        .color-opt.selected { border-color: #fff; transform: scale(1.15); }
+
+        /* ===== BUTTONS ===== */
+        .btn-save { width: 100%; padding: 14px; background: var(--orange); color: #000; border: none; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; margin-top: 8px; }
+        .btn-save:active { opacity: 0.85; }
+        .btn-danger { width: 100%; padding: 12px; background: transparent; color: var(--danger); border: 1px solid var(--danger); border-radius: 10px; font-size: 14px; cursor: pointer; margin-top: 12px; }
+        .btn-secondary { width: 100%; padding: 12px; background: #222; color: #fff; border: none; border-radius: 10px; font-size: 14px; cursor: pointer; margin-top: 8px; }
+
+        /* ===== SETTINGS SERVICE LIST ===== */
+        .settings-list { margin-top: 16px; }
+        .settings-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #1a1a1a; }
+        .settings-item .srv-icon { font-size: 22px; width: 28px; text-align: center; flex-shrink: 0; }
+        .settings-item .srv-name { flex: 1; font-size: 14px; font-weight: 600; }
+        .settings-item .port-input { width: 70px; padding: 6px 8px; background: #1a1a1a; border: 1px solid #333; border-radius: 8px; color: #fff; font-size: 13px; text-align: center; outline: none; }
+        .settings-item .port-input:focus { border-color: var(--orange); }
+
+        /* ===== TOGGLE SWITCH ===== */
+        .toggle { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .toggle .track { position: absolute; inset: 0; background: #333; border-radius: 24px; transition: background .2s; cursor: pointer; }
+        .toggle input:checked + .track { background: var(--orange); }
+        .toggle .track::after { content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%; background: #fff; top: 3px; left: 3px; transition: transform .2s; }
+        .toggle input:checked + .track::after { transform: translateX(20px); }
+
+        /* ===== QUICK-ADD ===== */
+        .quick-add-title { font-size: 14px; font-weight: 700; margin-top: 24px; margin-bottom: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+        .quick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .quick-btn { background: #1a1a1a; border: 1px solid #333; border-radius: 10px; padding: 10px 6px; cursor: pointer; text-align: center; color: var(--text); font-size: 12px; }
+        .quick-btn:active { background: #252525; border-color: var(--orange); }
+        .quick-btn .qi { font-size: 22px; display: block; margin-bottom: 4px; }
+        .quick-btn .qn { font-weight: 600; }
+        .quick-btn .qp { color: var(--text-dim); font-size: 10px; }
+
+        /* ===== FAB ===== */
+        .fab { position: fixed; bottom: 24px; right: 24px; width: 56px; height: 56px; border-radius: 16px; background: var(--orange); color: #000; border: none; font-size: 28px; cursor: pointer; box-shadow: 0 4px 20px rgba(255,144,0,.35); z-index: 40; display: flex; align-items: center; justify-content: center; }
+        .fab:active { transform: scale(0.92); }
+
+        /* ===== IMAGE UPLOAD ===== */
+        .image-upload-area { border: 2px dashed #333; border-radius: 10px; padding: 16px; text-align: center; cursor: pointer; margin-top: 8px; }
+        .image-upload-area:hover { border-color: var(--orange); }
+        .image-preview { display: none; align-items: center; gap: 10px; margin-top: 8px; padding: 8px; background: #1a1a1a; border-radius: 10px; }
+        .image-preview img { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; }
+        .image-preview .remove-img { margin-left: auto; color: var(--danger); cursor: pointer; font-size: 18px; padding: 4px 8px; }
     </style>
 </head>
-<body style="overflow-x:hidden;">
-    <div id="splash-screen" style="position:fixed; top:0; left:0; width:100%; height:100%; background:#0a0a0a; display:flex; justify-content:center; align-items:center; z-index:1000; animation:fadeOut 1.5s ease-in-out forwards;">
-  <div style="font-size:48px;">🎬</div>
+<body>
+
+<!-- ===== ONBOARDING ===== -->
+<div id="onboarding">
+    <div class="setup-logo">🏠</div>
+    <div class="setup-title">Home<span>Base</span></div>
+    <div class="setup-sub">Dein Zuhause. Immer im Griff.</div>
+    <div class="setup-card">
+        <h3>⚙️ Ersteinrichtung</h3>
+        <label>🏠 Home IP / Hostname</label>
+        <input type="text" id="setup-home-ip" placeholder="z.B. 192.168.1.100" autocomplete="off" autocapitalize="off">
+        <label>🌍 Öffentliche IP / Domain</label>
+        <input type="text" id="setup-public-ip" placeholder="z.B. home.example.com" autocomplete="off" autocapitalize="off">
+        <button class="btn-primary" onclick="finishSetup()">🚀 Los geht's!</button>
+    </div>
 </div>
-<div class="safe-top"></div>
-<style>
-  @keyframes fadeOut {
-    0% { opacity:1; }
-    100% { opacity:0; visibility:hidden; }
-  }
-</style>
 
-    <!-- ONBOARDING -->
-    <div class="onboarding" id="onboarding">
-        <div class="big-logo">🏠</div>
-        <h1>Home<span class="hub">Base</span></h1>
-        <div class="subtitle">Dein Zuhause. Immer im Griff.</div>
-        <div class="setup-card">
-            <h2>⚙️ Ersteinrichtung</h2>
-            <div class="field">
-                <label>🏠 Home IP (lokal)</label>
-                <input type="text" id="setup-home-ip" placeholder="192.168.2.42" inputmode="decimal">
-                <div class="hint">IP in deinem Heimnetzwerk</div>
-            </div>
-            <div class="field">
-                <label>🌐 Öffentliche IP / Domain</label>
-                <input type="text" id="setup-public-ip" placeholder="meine.duckdns.org" inputmode="url">
-                <div class="hint">Von unterwegs erreichbar</div>
-            </div>
-            <button class="start-btn" onclick="finishSetup()">🚀 Los geht's!</button>
+<!-- ===== APP ===== -->
+<div id="app">
+    <!-- Header -->
+    <div class="header">
+        <h1>🏠 Home<span>Base</span></h1>
+        <div class="header-actions">
+            <button id="delete-mode-btn" onclick="toggleDeleteMode()" title="Services löschen">🗑️</button>
+            <button onclick="openSettings()" title="Einstellungen">⚙️</button>
         </div>
     </div>
 
-    <!-- MAIN APP -->
-    <div class="app" id="app">
-        <div class="header">
-            <h1>🏠 Home<span class="hub">Base</span></h1>
-            <div class="header-actions">
-                <button onclick="toggleDeleteMode()" id="delete-mode-btn" title="Services entfernen">🗑️</button>
-                <button onclick="openSettings()" title="Einstellungen">⚙️</button>
-            </div>
-        </div>
-        <div class="ip-switch">
-            <button id="btn-home" onclick="switchIp('home')" class="active">
-                <span class="ip-label">🏠 Home</span>
-                <span class="ip-value" id="display-home-ip">192.168.2.42</span>
-            </button>
-            <button id="btn-public" onclick="switchIp('public')">
-                <span class="ip-label">🌐 Unterwegs</span>
-                <span class="ip-value" id="display-public-ip">meine.duckdns.org</span>
-            </button>
-        </div>
-        <div class="grid" id="grid"></div>
-        <!-- FAB removed: Service hinzufügen moved to Settings -->
-        <div class="safe-bottom"></div>
+    <!-- Mode Switch -->
+    <div class="mode-bar">
+        <button id="btn-home" class="active" onclick="switchMode('home')">🏠 Home</button>
+        <button id="btn-public" onclick="switchMode('public')">🌍 Öffentlich</button>
     </div>
 
-    <!-- SETTINGS MODAL -->
-    <div class="modal-overlay" id="settings-overlay" style="transform:translateY(100%); transition:transform 0.3s ease-out;">
-        <div class="modal" style="position:relative;">
-            <button class="close-btn" onclick="closeSettings()">✕</button>
-            <h2>⚙️ Einstellungen</h2>
-            <div class="section-title">🌐 IP / Domain</div>
-            <div class="ip-field">
-                <label>🏠 Home IP</label>
-                <input type="text" id="set-home-ip" placeholder="192.168.2.42" inputmode="decimal">
-            </div>
-            <div class="ip-field">
-                <label>🌐 Öffentliche IP</label>
-                <input type="text" id="set-public-ip" placeholder="meine.duckdns.org" inputmode="url">
-            </div>
-            <div class="section-title">🔧 Services bearbeiten</div>
-            <button class="save-btn" onclick="openAddServiceFromSettings()" style="margin-bottom:16px;">➕ Service hinzufügen</button>
-            <div id="settings-services"></div>
-            <div class="section-title">⚡ Schnell hinzufügen</div>
-            <p style="font-size:12px;color:#888;margin-bottom:10px;">Tippe auf einen Service um ihn direkt hinzuzufügen.</p>
-            <div id="quick-add-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;"></div>
-            <button class="save-btn" onclick="saveSettings()">💾 Einstellungen speichern</button>
-            <button class="reset-btn" onclick="resetAll()">🗑️ Alles zurücksetzen</button>
-        </div>
-    </div>
+    <!-- IP Display -->
+    <div class="ip-bar" id="ip-display">IP: ---</div>
 
-    <!-- ADD SERVICE MODAL -->
-    <div class="modal-overlay" id="add-overlay">
-        <div class="modal" style="position:relative;">
-            <button class="close-btn" onclick="closeAddService()">✕</button>
-            <h2>➕ Neuer Service</h2>
-            <div class="input-field">
-                <label>📛 Name</label>
-                <input type="text" id="add-name" placeholder="z.B. Pi-hole">
-            </div>
-            <div class="input-field">
-                <label>🔌 Port</label>
-                <input type="number" id="add-port" placeholder="8080" inputmode="numeric">
-            </div>
-            <div class="input-field">
-                <label>🌐 Protokoll</label>
-                <div style="display:flex;gap:8px;">
-                    <button onclick="setProto('http')" id="proto-http" style="flex:1;padding:10px;background:var(--orange);color:#000;border:none;border-radius:8px;font-weight:700;cursor:pointer;">http://</button>
-                    <button onclick="setProto('https')" id="proto-https" style="flex:1;padding:10px;background:#333;color:#fff;border:none;border-radius:8px;font-weight:700;cursor:pointer;">https://</button>
+    <!-- Service Grid -->
+    <div class="grid" id="grid"></div>
+
+    <!-- FAB -->
+    <button class="fab" onclick="openAddService()" title="Service hinzufügen">+</button>
+</div>
+
+<!-- ===== ADD SERVICE MODAL ===== -->
+<div class="overlay" id="add-overlay" onclick="if(event.target===this)closeAddService()">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <h2>➕ Service hinzufügen</h2>
+        <div class="form-group">
+            <label>Name</label>
+            <input type="text" id="add-name" placeholder="z.B. Home Assistant">
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Protokoll</label>
+                <div class="proto-btns">
+                    <div class="proto-btn active" id="proto-http" onclick="setProto('http')">HTTP</div>
+                    <div class="proto-btn" id="proto-https" onclick="setProto('https')">HTTPS</div>
                 </div>
             </div>
-            <div class="section-title">🎨 Farbe</div>
-            <div class="color-row" id="color-row"></div>
-            <div class="section-title">🎯 Icon wählen</div>
-            <div class="icon-grid" id="icon-grid"></div>
-            <div class="section-title">📷 Oder eigenes Bild</div>
-            <div class="input-field">
-                <input type="file" id="add-image" accept="image/*" onchange="handleImageUpload(event)">
+            <div class="form-group">
+                <label>Port</label>
+                <input type="number" id="add-port" placeholder="8080" min="1" max="65535">
             </div>
-            <div class="image-preview" id="image-preview" style="display:none;">
-                <img id="preview-img" src="">
-                <button class="remove-img" onclick="removeImage()">✕ Entfernen</button>
-            </div>
-            <button class="save-btn" onclick="addNewService()">🚀 Hinzufügen</button>
         </div>
+        <div class="form-group">
+            <label>Icon</label>
+            <div class="icon-grid" id="icon-grid"></div>
+        </div>
+        <div class="form-group">
+            <label>Farbe</label>
+            <div class="color-row" id="color-row"></div>
+        </div>
+        <div class="form-group">
+            <label>Bild (optional)</label>
+            <div class="image-upload-area" onclick="document.getElementById('add-image').click()">
+                📷 Bild hochladen
+            </div>
+            <input type="file" id="add-image" accept="image/*" style="display:none" onchange="handleImageUpload(event)">
+            <div class="image-preview" id="image-preview">
+                <img id="preview-img" src="" alt="">
+                <span>Bild gewählt</span>
+                <span class="remove-img" onclick="removeImage()">✕</span>
+            </div>
+        </div>
+        <button class="btn-save" onclick="addNewService()">✅ Hinzufügen</button>
     </div>
+</div>
 
-    <script>
-        // ===== ICONS & COLORS =====
-        const icons = ['🏠','🛡️','📡','📊','☁️','🎬','🎮','💾','🖥️','📹','🔔','💡','🌡️','🔒','🔑','📁','🖨️','⚡','🌐','📧','💬','🎵','📺','🎯','🧪','🔬','🤖','🛠️','📦','⏰','🔋','🗺️'];
-        const colors = ['#41bdf5','#67b279','#00b5e2','#5cdd8b','#0082c9','#ff9000','#e74c3c','#9b59b6','#f39c12','#1abc9c','#e91e63','#3f51b5','#ff5722','#607d8b','#795548','#009688'];
-        let selectedIcon = '🏠';
-        let selectedColor = '#ff9000';
-        let newServiceProto = 'http';
-        let newServiceImage = null;
+<!-- ===== SETTINGS MODAL ===== -->
+<div class="overlay" id="settings-overlay" onclick="if(event.target===this)closeSettings()">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <h2>⚙️ Einstellungen</h2>
+        <div class="form-group">
+            <label>🏠 Home IP / Hostname</label>
+            <input type="text" id="set-home-ip" autocomplete="off" autocapitalize="off">
+        </div>
+        <div class="form-group">
+            <label>🌍 Öffentliche IP / Domain</label>
+            <input type="text" id="set-public-ip" autocomplete="off" autocapitalize="off">
+        </div>
+        <button class="btn-save" onclick="saveSettings()">💾 Speichern</button>
 
-        // ===== DEFAULT SERVICES =====
-        const defaultServices = [
-            { id: 'ha',       name: 'HomeAssistant', port: 8123,  icon: '🏠', color: '#41bdf5', enabled: true, proto: 'http' },
-            { id: 'adguard',  name: 'AdGuard',       port: 3000,  icon: '🛡️', color: '#67b279', enabled: true, proto: 'http' },
-            { id: 'openwrt',  name: 'OpenWrt',       port: 80,    icon: '📡', color: '#00b5e2', enabled: true, proto: 'http' },
-            { id: 'uptime',   name: 'UptimeKuma',    port: 3001,  icon: '📊', color: '#5cdd8b', enabled: true, proto: 'http' },
-            { id: 'nextcloud',name: 'Nextcloud',     port: 443,   icon: '☁️', color: '#0082c9', enabled: true, proto: 'https' },
-            { id: 'jellyhub', name: 'JellyHub',      port: 8096,  icon: '🎬', color: '#ff9000', enabled: true, proto: 'http', special: true },
-        ];
+        <div class="quick-add-title">Services verwalten</div>
+        <div class="settings-list" id="settings-services"></div>
 
-        let currentMode = 'home';
-        let deleteMode = false;
+        <button class="btn-secondary" onclick="openAddServiceFromSettings()">➕ Neuer Service</button>
 
-        // ===== CONFIG =====
-        function getConfig() {
-            return {
-                homeIp: localStorage.getItem('hd-home-ip') || '',
-                publicIp: localStorage.getItem('hd-public-ip') || '',
-                setupDone: localStorage.getItem('hd-setup-done') === 'true',
-                services: JSON.parse(localStorage.getItem('hd-services') || 'null') || defaultServices
-            };
-        }
-        function saveConfig(cfg) {
-            localStorage.setItem('hd-home-ip', cfg.homeIp);
-            localStorage.setItem('hd-public-ip', cfg.publicIp);
-            localStorage.setItem('hd-setup-done', 'true');
-            localStorage.setItem('hd-services', JSON.stringify(cfg.services));
-        }
-        function getActiveIp() {
-            const cfg = getConfig();
-            return currentMode === 'home' ? cfg.homeIp : cfg.publicIp;
-        }
+        <div class="quick-add-title">Schnell hinzufügen</div>
+        <div class="quick-grid" id="quick-add-grid"></div>
 
-        // ===== ONBOARDING =====
-        function finishSetup() {
-            const homeIp = document.getElementById('setup-home-ip').value.trim();
-            const publicIp = document.getElementById('setup-public-ip').value.trim();
-            if (!homeIp) { alert('Bitte Home IP eingeben!'); return; }
-            const cfg = getConfig();
-            cfg.homeIp = homeIp;
-            cfg.publicIp = publicIp || homeIp;
-            cfg.setupDone = true;
-            saveConfig(cfg);
-            showApp();
-        }
+        <button class="btn-danger" onclick="resetAll()">⚠️ Alles zurücksetzen</button>
+    </div>
+</div>
 
-        // ===== IP SWITCH =====
-        function switchIp(mode) {
-            currentMode = mode;
-            document.getElementById('btn-home').className = mode === 'home' ? 'active' : '';
-            document.getElementById('btn-public').className = mode === 'public' ? 'active' : '';
-            renderCards();
-        }
+<script>
+// ===== ICONS & COLORS =====
+const ICONS = ['🏠','🛡️','📡','📊','☁️','🎬','🎮','💾','🖥️','📹','🔔','💡','🌡️','🔒','🔑','📁','🖨️','⚡','🌐','📧','💬','🎵','📺','🎯','🧪','🔬','🤖','🛠️','📦','⏰','🔋','🗺️'];
+const COLORS = ['#41bdf5','#67b279','#00b5e2','#5cdd8b','#0082c9','#ff9000','#e74c3c','#9b59b6','#f39c12','#1abc9c','#e91e63','#3f51b5','#ff5722','#607d8b','#795548','#009688'];
+const DEFAULT_SERVICES = [
+    { id:'ha', name:'Home Assistant', port:8123, icon:'🏠', color:'#41bdf5', enabled:true, proto:'http' },
+    { id:'adguard', name:'AdGuard', port:3000, icon:'🛡️', color:'#67b279', enabled:true, proto:'http' },
+    { id:'openwrt', name:'OpenWrt', port:80, icon:'📡', color:'#00b5e2', enabled:true, proto:'http' },
+    { id:'uptime', name:'Uptime Kuma', port:3001, icon:'📊', color:'#5cdd8b', enabled:true, proto:'http' },
+    { id:'nextcloud', name:'Nextcloud', port:443, icon:'☁️', color:'#0082c9', enabled:true, proto:'https' },
+    { id:'jellyhub', name:'JellyHub', port:8096, icon:'🎬', color:'#ff9000', enabled:true, proto:'http' },
+];
+const QUICK_ADD = [
+    { label:'Home Assistant', icon:'🏠', port:8123, color:'#41bdf5' },
+    { label:'Plex', icon:'🎬', port:32400, color:'#e5a00d' },
+    { label:'Jellyfin', icon:'🎞️', port:8096, color:'#00a4dc' },
+    { label:'Emby', icon:'🎞️', port:8920, color:'#52b54b' },
+    { label:'Sonarr', icon:'📺', port:8989, color:'#2980b9' },
+    { label:'Radarr', icon:'🎥', port:7878, color:'#ffc107' },
+    { label:'Overseerr', icon:'📋', port:5055, color:'#1c3f5a' },
+    { label:'NZBGet', icon:'📦', port:6789, color:'#2196f3' },
+    { label:'Transmission', icon:'⬇️', port:9091, color:'#d70607' },
+    { label:'Grafana', icon:'📈', port:3000, color:'#f46800' },
+    { label:'Traefik', icon:'🔀', port:8080, color:'#24b4f0' },
+    { label:'Prometheus', icon:'📊', port:9090, color:'#e6522c' },
+    { label:'Node-RED', icon:'🔴', port:1880, color:'#8f0000' },
+    { label:'Pi-hole', icon:'🕳️', port:80, color:'#96060c' },
+    { label:'Bitwarden', icon:'🔑', port:80, color:'#175ddc' },
+    { label:'WireGuard', icon:'🔐', port:51820, color:'#88171a' },
+];
 
-        // ===== CARDS =====
-        function openService(s) {
-            if (deleteMode) return;
-            const ip = getActiveIp();
-            const proto = s.proto || (s.port === 443 ? 'https' : 'http');
-            window.open(`${proto}://${ip}:${s.port}`, '_blank');
-        }
+// ===== STATE =====
+let currentMode = 'home';
+let deleteMode = false;
+let selectedIcon = '🏠';
+let selectedColor = '#ff9000';
+let newProto = 'http';
+let newImage = null;
 
-        function renderCards() {
-            const cfg = getConfig();
-            const ip = getActiveIp();
-            const grid = document.getElementById('grid');
-            grid.innerHTML = '';
-            const enabledServices = cfg.services.filter(s => s.enabled !== false);
-            enabledServices.forEach((s, idx) => {
-                const card = document.createElement('div');
-                card.className = 'service-card';
-                if (s.special || s.id === 'jellyhub') {
-                    card.style.background = '#000';
-                    card.style.border = '2px solid var(--orange)';
-                    const iconHtml = s.image ? `<img class="card-img" src="${s.image}" alt="">` : `<span class="card-icon">${s.icon || '🔌'}</span>`;
-                    card.innerHTML = `
-                        <div class="service-info" style="display:flex;align-items:center;">
-                            ${iconHtml}
-                            <div>
-                                <div class="service-name" style="color:var(--orange);font-weight:900;font-style:italic;">Jelly<span style="background:var(--orange);color:#000;padding:1px 6px;border-radius:4px;margin-left:2px;font-style:normal;">Hub</span></div>
-                                <div class="service-url">${ip}:${s.port}</div>
-                            </div>
-                        </div>
-                        <div class="status-dot"></div>`;
-                } else {
-                    card.style.borderLeftColor = s.color || '#ff9000';
-                    const iconHtml = s.image ? `<img class="card-img" src="${s.image}" alt="">` : `<span class="card-icon">${s.icon || '🔌'}</span>`;
-                    card.innerHTML = `
-                        <div class="service-info" style="display:flex;align-items:center;">
-                            ${iconHtml}
-                            <div>
-                                <div class="service-name">${s.name}</div>
-                                <div class="service-url">${ip}:${s.port}</div>
-                            </div>
-                        </div>
-                        <div class="status-dot"></div>`;
-                }
-                card.onclick = () => {
-                    if (deleteMode) {
-                        deleteService(s.id);
-                    } else {
-                        openService(s);
-                    }
-                };
-                grid.appendChild(card);
-            });
-            grid.className = 'grid' + (deleteMode ? ' delete-mode' : '');
-        }
-
-        // ===== DELETE MODE =====
-        function toggleDeleteMode() {
-            deleteMode = !deleteMode;
-            const btn = document.getElementById('delete-mode-btn');
-            btn.style.borderColor = deleteMode ? '#e74c3c' : '#444';
-            btn.style.color = deleteMode ? '#e74c3c' : '#fff';
-            btn.innerHTML = deleteMode ? '✅ FERTIG' : '🗑️';
-            renderCards();
-        }
-        function deleteService(id) {
-            const cfg = getConfig();
-            cfg.services = cfg.services.filter(s => s.id !== id);
-            saveConfig(cfg);
-            deleteMode = false;
-            const btn = document.getElementById('delete-mode-btn');
-            btn.style.borderColor = '#444';
-            btn.style.color = '#fff';
-            btn.innerHTML = '🗑️';
-            renderCards();
-        }
-
-        // ===== ADD SERVICE =====
-        function openAddService() {
-            if (deleteMode) { toggleDeleteMode(); return; }
-            selectedIcon = '🏠';
-            selectedColor = '#ff9000';
-            newServiceProto = 'http';
-            newServiceImage = null;
-            document.getElementById('add-name').value = '';
-            document.getElementById('add-port').value = '';
-            document.getElementById('proto-http').style.background = 'var(--orange)';
-            document.getElementById('proto-http').style.color = '#000';
-            document.getElementById('proto-https').style.background = '#333';
-            document.getElementById('proto-https').style.color = '#fff';
-            document.getElementById('image-preview').style.display = 'none';
-            document.getElementById('add-image').value = '';
-            renderIconGrid();
-            renderColorRow();
-            document.getElementById('add-overlay').classList.add('show');
-        }
-        function closeAddService() { document.getElementById('add-overlay').classList.remove('show'); }
-        function setProto(p) {
-            newServiceProto = p;
-            document.getElementById('proto-http').style.background = p === 'http' ? 'var(--orange)' : '#333';
-            document.getElementById('proto-http').style.color = p === 'http' ? '#000' : '#fff';
-            document.getElementById('proto-https').style.background = p === 'https' ? 'var(--orange)' : '#333';
-            document.getElementById('proto-https').style.color = p === 'https' ? '#000' : '#fff';
-        }
-        function renderIconGrid() {
-            const grid = document.getElementById('icon-grid');
-            grid.innerHTML = '';
-            icons.forEach(i => {
-                const btn = document.createElement('div');
-                btn.className = 'icon-btn' + (i === selectedIcon ? ' selected' : '');
-                btn.textContent = i;
-                btn.onclick = () => { selectedIcon = i; renderIconGrid(); };
-                grid.appendChild(btn);
-            });
-        }
-        function renderColorRow() {
-            const row = document.getElementById('color-row');
-            row.innerHTML = '';
-            colors.forEach(c => {
-                const btn = document.createElement('div');
-                btn.className = 'color-btn' + (c === selectedColor ? ' selected' : '');
-                btn.style.background = c;
-                btn.onclick = () => { selectedColor = c; renderColorRow(); };
-                row.appendChild(btn);
-            });
-        }
-        function handleImageUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                newServiceImage = ev.target.result;
-                document.getElementById('preview-img').src = newServiceImage;
-                document.getElementById('image-preview').style.display = 'flex';
-                selectedIcon = '🔌'; // reset emoji when using image
-            };
-            reader.readAsDataURL(file);
-        }
-        function removeImage() {
-            newServiceImage = null;
-            document.getElementById('image-preview').style.display = 'none';
-            document.getElementById('add-image').value = '';
-        }
-        function addNewService() {
-            const name = document.getElementById('add-name').value.trim();
-            const port = parseInt(document.getElementById('add-port').value);
-            if (!name) { alert('Bitte Name eingeben!'); return; }
-            if (!port || port < 1 || port > 65535) { alert('Bitte gültigen Port eingeben (1-65535)!'); return; }
-            const cfg = getConfig();
-            const id = 'srv_' + Date.now();
-            const newSrv = { id, name, port, icon: selectedIcon, color: selectedColor, enabled: true, proto: newServiceProto };
-            if (newServiceImage) newSrv.image = newServiceImage;
-            cfg.services.push(newSrv);
-            saveConfig(cfg);
-            closeAddService();
-            renderCards();
-        }
-
-        // ===== SETTINGS =====
-        function openSettings() {
-  document.getElementById('settings-overlay').style.transform = 'translateY(0)';
-            const cfg = getConfig();
-            document.getElementById('set-home-ip').value = cfg.homeIp;
-            document.getElementById('set-public-ip').value = cfg.publicIp;
-            const container = document.getElementById('settings-services');
-            container.innerHTML = '';
-            cfg.services.forEach((s, i) => {
-                const row = document.createElement('div');
-                row.className = 'service-row';
-                const iconHtml = s.image ? `<img class="card-img" src="${s.image}" style="width:24px;height:24px;">` : '';
-                const portNum = s.port || (s.url ? parseInt(new URL(s.url).port) || 80 : 80);
-                row.innerHTML = `
-                    <label class="toggle">
-                        <input type="checkbox" data-idx="${i}" ${s.enabled !== false ? 'checked' : ''} onchange="toggleService(this)">
-                        <span class="slider"></span>
-                    </label>
-                    ${iconHtml || `<span class="srv-icon">${s.icon || '🔌'}</span>`}
-                    <span class="srv-name">${s.name}</span>
-                    <input type="number" class="port-input" value="${portNum}" data-idx="${i}" onchange="updatePort(this)">`;
-                container.appendChild(row);
-            });
-            renderQuickAdd();
-            document.getElementById('settings-overlay').classList.add('show');
-        }
-        function closeSettings() { 
-  document.getElementById('settings-overlay').style.transform = 'translateY(100%)';
-  setTimeout(() => document.getElementById('settings-overlay').classList.remove('show'), 300); 
+// ===== CONFIG =====
+function getConfig() {
+    return {
+        homeIp: localStorage.getItem('hd-home-ip') || '',
+        publicIp: localStorage.getItem('hd-public-ip') || '',
+        setupDone: localStorage.getItem('hd-setup-done') === 'true',
+        services: JSON.parse(localStorage.getItem('hd-services') || 'null') || DEFAULT_SERVICES.slice()
+    };
 }
-        function toggleService(el) {
-            const cfg = getConfig();
-            const idx = parseInt(el.dataset.idx);
-            cfg.services[idx].enabled = el.checked;
-            saveConfig(cfg);
-            renderCards();
-        }
-        function updatePort(el) {
-            const cfg = getConfig();
-            const idx = parseInt(el.dataset.idx);
-            cfg.services[idx].port = parseInt(el.value) || 80;
-            saveConfig(cfg);
-            renderCards();
-        }
-        function saveSettings() {
-            const cfg = getConfig();
-            cfg.homeIp = document.getElementById('set-home-ip').value.trim();
-            cfg.publicIp = document.getElementById('set-public-ip').value.trim() || cfg.homeIp;
-            saveConfig(cfg);
-            document.getElementById('display-home-ip').textContent = cfg.homeIp;
-            document.getElementById('display-public-ip').textContent = cfg.publicIp;
-            renderCards();
-            closeSettings();
-        }
-        function resetAll() {
-            if (confirm('Wirklich ALLE Einstellungen zurücksetzen?')) {
-                localStorage.clear();
-                location.reload();
+function saveConfig(cfg) {
+    localStorage.setItem('hd-home-ip', cfg.homeIp);
+    localStorage.setItem('hd-public-ip', cfg.publicIp);
+    localStorage.setItem('hd-setup-done', 'true');
+    localStorage.setItem('hd-services', JSON.stringify(cfg.services));
+}
+function getActiveIp() {
+    const cfg = getConfig();
+    return currentMode === 'home' ? cfg.homeIp : cfg.publicIp;
+}
+
+// ===== HELPERS =====
+function serviceUrl(s) {
+    const ip = getActiveIp();
+    if (!ip) return '#';
+    // Support both new format (port+proto) and legacy format (url)
+    if (s.port) {
+        const proto = s.proto || (s.port === 443 ? 'https' : 'http');
+        return `${proto}://${ip}:${s.port}`;
+    }
+    if (s.url) {
+        // Legacy: replace stored IP with current IP
+        try {
+            const u = new URL(s.url);
+            return `${u.protocol}//${ip}:${u.port || 80}`;
+        } catch(e) { return s.url; }
+    }
+    return '#';
+}
+
+// ===== ONBOARDING =====
+function finishSetup() {
+    const homeIp = document.getElementById('setup-home-ip').value.trim();
+    const publicIp = document.getElementById('setup-public-ip').value.trim();
+    if (!homeIp) { alert('Bitte Home IP eingeben!'); return; }
+    const cfg = getConfig();
+    cfg.homeIp = homeIp;
+    cfg.publicIp = publicIp || homeIp;
+    cfg.setupDone = true;
+    saveConfig(cfg);
+    showApp();
+}
+
+// ===== MODE SWITCH =====
+function switchMode(mode) {
+    currentMode = mode;
+    document.getElementById('btn-home').className = mode === 'home' ? 'active' : '';
+    document.getElementById('btn-public').className = mode === 'public' ? 'active' : '';
+    renderCards();
+}
+
+// ===== RENDER CARDS =====
+function renderCards() {
+    const cfg = getConfig();
+    const ip = getActiveIp();
+    const grid = document.getElementById('grid');
+    grid.innerHTML = '';
+    const enabled = cfg.services.filter(s => s.enabled !== false);
+
+    document.getElementById('ip-display').textContent = ip ? `IP: ${ip}` : '⚠️ Keine IP konfiguriert';
+
+    enabled.forEach(s => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        if (s.color) card.style.borderLeftColor = s.color;
+
+        const url = serviceUrl(s);
+        const portDisplay = s.port || (s.url ? (() => { try { return new URL(s.url).port || '80'; } catch(e) { return '?'; } })() : '?');
+        const iconHtml = s.image
+            ? `<img class="card-img" src="${s.image}" alt="">`
+            : `<span class="card-icon">${s.icon || '🔌'}</span>`;
+
+        card.innerHTML = `
+            ${iconHtml}
+            <div class="card-info">
+                <div class="card-name">${s.name}</div>
+                <div class="card-url">${ip || '---'}:${portDisplay}</div>
+            </div>
+            <div class="card-status"></div>`;
+
+        card.onclick = () => {
+            if (deleteMode) {
+                if (confirm(`"${s.name}" löschen?`)) deleteService(s.id);
+            } else {
+                window.open(url, '_blank');
             }
-        }
+        };
+        grid.appendChild(card);
+    });
 
-        // ===== OPEN ADD SERVICE FROM SETTINGS =====
-        function openAddServiceFromSettings() {
-            closeSettings();
-            setTimeout(() => openAddService(), 200);
-        }
+    grid.className = 'grid' + (deleteMode ? ' delete-mode' : '');
+}
 
-        // ===== QUICK-ADD SERVICES =====
-        const quickAddServices = [
-            { label: 'Home Assistant', icon: '🏠', port: 8123, color: '#41bdf5' },
-            { label: 'Plex', icon: '🎬', port: 32400, color: '#e5a00d' },
-            { label: 'Jellyfin', icon: '🎞️', port: 8096, color: '#00a4dc' },
-            { label: 'Emby', icon: '🎞️', port: 8920, color: '#52b54b' },
-            { label: 'Sonarr', icon: '📺', port: 8989, color: '#2980b9' },
-            { label: 'Radarr', icon: '🎥', port: 7878, color: '#ffc107' },
-            { label: 'Overseerr', icon: '📋', port: 5055, color: '#1c3f5a' },
-            { label: 'NZBGet', icon: '📦', port: 6789, color: '#2196f3' },
-            { label: 'Transmission', icon: '⬇️', port: 9091, color: '#d70607' },
-            { label: 'Grafana', icon: '📈', port: 2342, color: '#f46800' },
-            { label: 'Traefik', icon: '🔀', port: 8200, color: '#24b4f0' },
-            { label: 'Prometheus', icon: '📊', port: 9090, color: '#e6522c' },
-            { label: 'Node-RED', icon: '🔴', port: 1880, color: '#8f0000' },
-            { label: 'AdGuard', icon: '🛡️', port: 3000, color: '#67b279' },
-            { label: 'Nextcloud', icon: '☁️', port: 80, color: '#0082c9' },
-            { label: 'Wireguard', icon: '🔐', port: 51820, color: '#88171a' },
-            { label: 'Bitwarden', icon: '🔑', port: 80, color: '#175ddc' },
-            { label: 'Pi-hole', icon: '🕳️', port: 80, color: '#96060c' }
-        ];
+// ===== DELETE MODE =====
+function toggleDeleteMode() {
+    deleteMode = !deleteMode;
+    const btn = document.getElementById('delete-mode-btn');
+    btn.className = deleteMode ? 'active-delete' : '';
+    btn.innerHTML = deleteMode ? '✅' : '🗑️';
+    renderCards();
+}
+function deleteService(id) {
+    const cfg = getConfig();
+    cfg.services = cfg.services.filter(s => s.id !== id);
+    saveConfig(cfg);
+    renderCards();
+    renderSettingsServices();
+}
 
-        function renderQuickAdd() {
-            const grid = document.getElementById('quick-add-grid');
-            if (!grid) return;
-            const ip = (currentMode === 'home' ? getConfig().homeIp : getConfig().publicIp) || '192.168.1.x';
-            grid.innerHTML = '';
-            quickAddServices.forEach(s => {
-                const btn = document.createElement('button');
-                btn.style.cssText = 'background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:10px 6px;cursor:pointer;text-align:center;color:var(--text);font-size:12px;';
-                btn.innerHTML = `<span style="font-size:22px;display:block;margin-bottom:4px;">${s.icon}</span><strong>${s.label}</strong><br><span style="color:#888;font-size:10px;">:${s.port}</span>`;
-                btn.onclick = () => {
-                    const port = prompt(`Port für ${s.label}:`, s.port);
-                    if (!port) return;
-                    const cfg = getConfig();
-                    const proto = (port == 443 || port == 8443) ? 'https' : 'http';
-                    cfg.services.push({ id: 'qa_' + Date.now(), name: s.label, url: `${proto}://${ip}:${port}`, icon: s.icon, color: s.color });
-                    saveConfig(cfg);
-                    renderSettingsServices();
-                    renderCards();
-                };
-                grid.appendChild(btn);
-            });
-        }
+// ===== ADD SERVICE =====
+function openAddService() {
+    if (deleteMode) toggleDeleteMode();
+    selectedIcon = '🏠'; selectedColor = '#ff9000'; newProto = 'http'; newImage = null;
+    document.getElementById('add-name').value = '';
+    document.getElementById('add-port').value = '';
+    document.getElementById('add-image').value = '';
+    document.getElementById('image-preview').style.display = 'none';
+    setProto('http');
+    renderIconGrid();
+    renderColorRow();
+    document.getElementById('add-overlay').classList.add('show');
+}
+function closeAddService() { document.getElementById('add-overlay').classList.remove('show'); }
+function setProto(p) {
+    newProto = p;
+    document.getElementById('proto-http').className = 'proto-btn' + (p==='http'?' active':'');
+    document.getElementById('proto-https').className = 'proto-btn' + (p==='https'?' active':'');
+}
+function renderIconGrid() {
+    const g = document.getElementById('icon-grid'); g.innerHTML = '';
+    ICONS.forEach(i => {
+        const d = document.createElement('div');
+        d.className = 'icon-opt' + (i===selectedIcon?' selected':'');
+        d.textContent = i;
+        d.onclick = () => { selectedIcon = i; renderIconGrid(); };
+        g.appendChild(d);
+    });
+}
+function renderColorRow() {
+    const r = document.getElementById('color-row'); r.innerHTML = '';
+    COLORS.forEach(c => {
+        const d = document.createElement('div');
+        d.className = 'color-opt' + (c===selectedColor?' selected':'');
+        d.style.background = c;
+        d.onclick = () => { selectedColor = c; renderColorRow(); };
+        r.appendChild(d);
+    });
+}
+function handleImageUpload(e) {
+    const f = e.target.files[0]; if (!f) return;
+    const r = new FileReader();
+    r.onload = ev => {
+        newImage = ev.target.result;
+        document.getElementById('preview-img').src = newImage;
+        document.getElementById('image-preview').style.display = 'flex';
+    };
+    r.readAsDataURL(f);
+}
+function removeImage() {
+    newImage = null;
+    document.getElementById('image-preview').style.display = 'none';
+    document.getElementById('add-image').value = '';
+}
+function addNewService() {
+    const name = document.getElementById('add-name').value.trim();
+    const port = parseInt(document.getElementById('add-port').value);
+    if (!name) { alert('Bitte Name eingeben!'); return; }
+    if (!port || port < 1 || port > 65535) { alert('Bitte gültigen Port (1-65535)!'); return; }
+    const cfg = getConfig();
+    const srv = { id: 'srv_'+Date.now(), name, port, icon: selectedIcon, color: selectedColor, enabled: true, proto: newProto };
+    if (newImage) srv.image = newImage;
+    cfg.services.push(srv);
+    saveConfig(cfg);
+    closeAddService();
+    renderCards();
+    renderSettingsServices();
+}
 
-        function addScannedService(ip, port, label, icon) {
+// ===== SETTINGS =====
+function openSettings() {
+    const cfg = getConfig();
+    document.getElementById('set-home-ip').value = cfg.homeIp;
+    document.getElementById('set-public-ip').value = cfg.publicIp;
+    renderSettingsServices();
+    renderQuickAdd();
+    document.getElementById('settings-overlay').classList.add('show');
+}
+function closeSettings() { document.getElementById('settings-overlay').classList.remove('show'); }
+function renderSettingsServices() {
+    const cfg = getConfig();
+    const c = document.getElementById('settings-services');
+    c.innerHTML = '';
+    cfg.services.forEach((s, i) => {
+        const portVal = s.port || (s.url ? parseInt(new URL(s.url).port) || 80 : 80);
+        const iconHtml = s.image
+            ? `<img class="card-img" src="${s.image}" style="width:24px;height:24px;border-radius:6px;">`
+            : `<span class="srv-icon">${s.icon || '🔌'}</span>`;
+        const div = document.createElement('div');
+        div.className = 'settings-item';
+        div.innerHTML = `
+            <label class="toggle">
+                <input type="checkbox" ${s.enabled!==false?'checked':''} data-idx="${i}" onchange="toggleService(this)">
+                <span class="track"></span>
+            </label>
+            ${iconHtml}
+            <span class="srv-name">${s.name}</span>
+            <input type="number" class="port-input" value="${portVal}" data-idx="${i}" onchange="updatePort(this)" min="1" max="65535">`;
+        c.appendChild(div);
+    });
+}
+function toggleService(el) {
+    const cfg = getConfig();
+    cfg.services[parseInt(el.dataset.idx)].enabled = el.checked;
+    saveConfig(cfg);
+    renderCards();
+}
+function updatePort(el) {
+    const cfg = getConfig();
+    const idx = parseInt(el.dataset.idx);
+    const val = parseInt(el.value);
+    if (val >= 1 && val <= 65535) {
+        cfg.services[idx].port = val;
+        saveConfig(cfg);
+        renderCards();
+    }
+}
+function saveSettings() {
+    const cfg = getConfig();
+    cfg.homeIp = document.getElementById('set-home-ip').value.trim();
+    cfg.publicIp = document.getElementById('set-public-ip').value.trim() || cfg.homeIp;
+    saveConfig(cfg);
+    renderCards();
+    closeSettings();
+}
+function openAddServiceFromSettings() { closeSettings(); setTimeout(openAddService, 200); }
+function resetAll() {
+    if (confirm('Wirklich ALLE Einstellungen zurücksetzen?')) { localStorage.clear(); location.reload(); }
+}
+
+// ===== QUICK-ADD =====
+function renderQuickAdd() {
+    const grid = document.getElementById('quick-add-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    QUICK_ADD.forEach(s => {
+        const btn = document.createElement('button');
+        btn.className = 'quick-btn';
+        btn.innerHTML = `<span class="qi">${s.icon}</span><span class="qn">${s.label}</span><br><span class="qp">:${s.port}</span>`;
+        btn.onclick = () => {
+            const port = prompt(`Port für ${s.label}:`, s.port);
+            if (!port) return;
+            const p = parseInt(port);
+            if (!p || p < 1 || p > 65535) { alert('Ungültiger Port!'); return; }
             const cfg = getConfig();
-            const proto = (port === 443 || port === 8443) ? 'https' : 'http';
-            cfg.services.push({ id: 'add_' + Date.now(), name: label, url: `${proto}://${ip}:${port}`, icon: icon, color: '#ff9000' });
+            cfg.services.push({
+                id: 'qa_' + Date.now(),
+                name: s.label,
+                port: p,
+                icon: s.icon,
+                color: s.color,
+                enabled: true,
+                proto: (p === 443 || p === 8443) ? 'https' : 'http'
+            });
             saveConfig(cfg);
             renderSettingsServices();
             renderCards();
-        }
-
-        // ===== INIT =====
-        function showApp() {
-            const cfg = getConfig();
-            document.getElementById('display-home-ip').textContent = cfg.homeIp;
-            document.getElementById('display-public-ip').textContent = cfg.publicIp || cfg.homeIp;
-            document.getElementById('onboarding').style.display = 'none';
-            document.getElementById('app').style.display = 'block';
-            renderCards();
-        }
-        document.addEventListener('DOMContentLoaded', () => {
-            const cfg = getConfig();
-            if (cfg.setupDone) showApp();
-        });
-        document.getElementById('settings-overlay').addEventListener('click', function(e) { if (e.target === this) closeSettings(); });
-        document.getElementById('add-overlay').addEventListener('click', function(e) { if (e.target === this) closeAddService(); });
-    </script>
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/service-worker.js');
+        };
+        grid.appendChild(btn);
     });
-  }
+}
+
+// ===== INIT =====
+function showApp() {
+    const cfg = getConfig();
+    document.getElementById('onboarding').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    renderCards();
+}
+document.addEventListener('DOMContentLoaded', () => {
+    const cfg = getConfig();
+    if (cfg.setupDone) showApp();
+});
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(()=>{}));
+}
 </script>
 </body>
 </html>
