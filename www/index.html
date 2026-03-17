@@ -171,16 +171,9 @@
             <div class="section-title">🔧 Services bearbeiten</div>
             <button class="save-btn" onclick="openAddServiceFromSettings()" style="margin-bottom:16px;">➕ Service hinzufügen</button>
             <div id="settings-services"></div>
-            <div class="section-title">🔍 Netzwerk-Scanner</div>
-            <p style="font-size:12px;color:#888;margin-bottom:10px;">Scannt das Netzwerk nach erreichbaren Services auf häufigen Ports.</p>
-            <button class="save-btn" id="scan-btn" onclick="startPortScan()">🔍 Netzwerk scannen</button>
-            <div id="scan-progress" style="display:none;margin-top:12px;">
-                <div style="background:#222;border-radius:8px;overflow:hidden;height:20px;">
-                    <div id="scan-bar" style="background:var(--orange);height:100%;width:0%;transition:width .1s;border-radius:8px;"></div>
-                </div>
-                <div id="scan-status" style="font-size:12px;color:#888;margin-top:6px;text-align:center;">Scanne...</div>
-            </div>
-            <div id="scan-results" style="margin-top:12px;"></div>
+            <div class="section-title">⚡ Schnell hinzufügen</div>
+            <p style="font-size:12px;color:#888;margin-bottom:10px;">Tippe auf einen Service um ihn direkt hinzuzufügen.</p>
+            <div id="quick-add-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px;"></div>
             <button class="save-btn" onclick="saveSettings()">💾 Einstellungen speichern</button>
             <button class="reset-btn" onclick="resetAll()">🗑️ Alles zurücksetzen</button>
         </div>
@@ -453,6 +446,7 @@
                 const row = document.createElement('div');
                 row.className = 'service-row';
                 const iconHtml = s.image ? `<img class="card-img" src="${s.image}" style="width:24px;height:24px;">` : '';
+                const portNum = s.port || (s.url ? parseInt(new URL(s.url).port) || 80 : 80);
                 row.innerHTML = `
                     <label class="toggle">
                         <input type="checkbox" data-idx="${i}" ${s.enabled !== false ? 'checked' : ''} onchange="toggleService(this)">
@@ -460,9 +454,10 @@
                     </label>
                     ${iconHtml || `<span class="srv-icon">${s.icon || '🔌'}</span>`}
                     <span class="srv-name">${s.name}</span>
-                    <input type="number" class="port-input" value="${s.port}" data-idx="${i}" onchange="updatePort(this)">`;
+                    <input type="number" class="port-input" value="${portNum}" data-idx="${i}" onchange="updatePort(this)">`;
                 container.appendChild(row);
             });
+            renderQuickAdd();
             document.getElementById('settings-overlay').classList.add('show');
         }
         function closeSettings() { document.getElementById('settings-overlay').classList.remove('show'); }
@@ -503,166 +498,56 @@
             setTimeout(() => openAddService(), 200);
         }
 
-        // Port scanner via WebSocket (fetch blocked by Mixed Content from HTTPS→HTTP)
-        const scanPorts = [80, 443, 3000, 5000, 8080, 8123, 8443, 9000, 9090, 32400, 8181, 7878, 8989, 6789, 5055, 8096, 8200, 8920, 2342, 1880];
-        let scanAbortController = null;
+        // ===== QUICK-ADD SERVICES =====
+        const quickAddServices = [
+            { label: 'Home Assistant', icon: '🏠', port: 8123, color: '#41bdf5' },
+            { label: 'Plex', icon: '🎬', port: 32400, color: '#e5a00d' },
+            { label: 'Jellyfin', icon: '🎞️', port: 8096, color: '#00a4dc' },
+            { label: 'Emby', icon: '🎞️', port: 8920, color: '#52b54b' },
+            { label: 'Sonarr', icon: '📺', port: 8989, color: '#2980b9' },
+            { label: 'Radarr', icon: '🎥', port: 7878, color: '#ffc107' },
+            { label: 'Overseerr', icon: '📋', port: 5055, color: '#1c3f5a' },
+            { label: 'NZBGet', icon: '📦', port: 6789, color: '#2196f3' },
+            { label: 'Transmission', icon: '⬇️', port: 9091, color: '#d70607' },
+            { label: 'Grafana', icon: '📈', port: 2342, color: '#f46800' },
+            { label: 'Traefik', icon: '🔀', port: 8200, color: '#24b4f0' },
+            { label: 'Prometheus', icon: '📊', port: 9090, color: '#e6522c' },
+            { label: 'Node-RED', icon: '🔴', port: 1880, color: '#8f0000' },
+            { label: 'AdGuard', icon: '🛡️', port: 3000, color: '#67b279' },
+            { label: 'Nextcloud', icon: '☁️', port: 80, color: '#0082c9' },
+            { label: 'Wireguard', icon: '🔐', port: 51820, color: '#88171a' },
+            { label: 'Bitwarden', icon: '🔑', port: 80, color: '#175ddc' },
+            { label: 'Pi-hole', icon: '🕳️', port: 80, color: '#96060c' }
+        ];
 
-        async function startPortScan() {
-            const cfg = getConfig();
-            const baseIp = (currentMode === 'home' ? cfg.homeIp : cfg.publicIp);
-            if (!baseIp) { alert('Bitte zuerst eine IP-Adresse in den Einstellungen eingeben!'); return; }
-            const ip = baseIp.trim();
-
-            const btn = document.getElementById('scan-btn');
-            btn.textContent = '⏹️ Scan abbrechen';
-            btn.onclick = cancelPortScan;
-            document.getElementById('scan-progress').style.display = 'block';
-            document.getElementById('scan-bar').style.width = '0%';
-            document.getElementById('scan-status').textContent = 'Scanne...';
-            document.getElementById('scan-results').innerHTML = '';
-
-            scanAbortController = new AbortController();
-            const signal = scanAbortController.signal;
-            const found = [];
-            let scanned = 0;
-            const total = scanPorts.length;
-            let wsWorked = false;
-
-            const concurrency = 10;
-            let idx = 0;
-
-            async function checkPort() {
-                while (idx < scanPorts.length && !signal.aborted) {
-                    const port = scanPorts[idx++];
-                    if (signal.aborted) return;
-                    try {
-                        await new Promise((resolve, reject) => {
-                            const ws = new WebSocket(`ws://${ip}:${port}/`);
-                            const timer = setTimeout(() => { try { ws.close(); } catch(e){} reject(); }, 600);
-                            ws.onopen = () => { clearTimeout(timer); wsWorked = true; try { ws.close(); } catch(e){} resolve(); };
-                            ws.onerror = () => { clearTimeout(timer); reject(); };
-                            ws.onclose = () => { clearTimeout(timer); reject(); };
-                        });
-                        found.push({ ip, port });
-                    } catch(e) { /* port closed */ }
-                    scanned++;
-                    const pct = Math.round((scanned / total) * 100);
-                    document.getElementById('scan-bar').style.width = pct + '%';
-                    document.getElementById('scan-status').textContent = `Port ${port} (${pct}%)`;
-                }
-            }
-
-            const workers = [];
-            for (let i = 0; i < concurrency; i++) workers.push(checkPort());
-            await Promise.all(workers);
-
-            scanAbortController = null;
-            btn.textContent = '🔍 Netzwerk scannen';
-            btn.onclick = startPortScan;
-            document.getElementById('scan-status').textContent = signal.aborted ? 'Abgebrochen.' : `Fertig! ${found.length} Service(s) auf ${ip} gefunden.`;
-
-            const resultsDiv = document.getElementById('scan-results');
-            resultsDiv.innerHTML = '';
-
-            // Show found services
-            if (!signal.aborted && found.length > 0) {
-                found.forEach(f => {
-                    const row = document.createElement('div');
-                    row.style.cssText = 'display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #222;';
-                    const name = guessServiceName(f.port);
-                    row.innerHTML = `
-                        <span style="font-size:20px;">${name.icon}</span>
-                        <div style="flex:1;">
-                            <div style="font-weight:600;font-size:13px;">${f.ip}:${f.port}</div>
-                            <div style="font-size:11px;color:#888;">${name.label}</div>
-                        </div>
-                        <button onclick="addScannedService('${f.ip}', ${f.port}, '${name.label}', '${name.icon}')" style="background:var(--orange);color:#000;border:none;border-radius:8px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;">➕ Hinzufügen</button>`;
-                    resultsDiv.appendChild(row);
-                });
-            }
-
-            // Always show quick-add as fallback (WebSocket also blocked on some browsers)
-            const quickAddPorts = [
-                { port: 8123, label: 'Home Assistant', icon: '🏠' },
-                { port: 32400, label: 'Plex', icon: '🎬' },
-                { port: 8989, label: 'Sonarr', icon: '📺' },
-                { port: 7878, label: 'Radarr', icon: '🎥' },
-                { port: 6789, label: 'NZBGet', icon: '📦' },
-                { port: 9091, label: 'Transmission', icon: '⬇️' },
-                { port: 8080, label: 'Webserver', icon: '🌐' },
-                { port: 8096, label: 'Jellyfin', icon: '🎞️' },
-                { port: 5055, label: 'Overseerr', icon: '📋' },
-                { port: 80, label: 'HTTP', icon: '🌐' },
-                { port: 443, label: 'HTTPS', icon: '🔒' },
-                { port: 8443, label: 'HTTPS Alt', icon: '🔒' },
-                { port: 3000, label: 'Node.js', icon: '🟢' },
-                { port: 5000, label: 'Dev Server', icon: '🛠️' },
-                { port: 8181, label: 'Service', icon: '🔌' },
-                { port: 9000, label: 'Service', icon: '🔌' },
-                { port: 9090, label: 'Prometheus', icon: '📊' },
-                { port: 8200, label: 'Traefik', icon: '🔀' },
-                { port: 8920, label: 'Emby', icon: '🎞️' },
-                { port: 2342, label: 'Grafana', icon: '📈' },
-                { port: 1880, label: 'Node-RED', icon: '🔴' }
-            ];
-
-            const fallbackTitle = document.createElement('div');
-            fallbackTitle.style.cssText = 'margin-top:16px;font-size:13px;color:#888;text-align:center;';
-            fallbackTitle.textContent = wsWorked ? 'Oder schnell hinzufügen:' : 'Scan blockiert (Mixed Content). Services direkt hinzufügen:';
-            resultsDiv.appendChild(fallbackTitle);
-
-            const quickGrid = document.createElement('div');
-            quickGrid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;';
-            quickAddPorts.forEach(p => {
-                const b = document.createElement('button');
-                b.style.cssText = 'background:#1a1a1a;border:1px solid #333;border-radius:8px;padding:10px;cursor:pointer;text-align:left;color:var(--text);font-size:13px;';
-                b.innerHTML = `${p.icon} <strong>${p.label}</strong><br><span style="color:#888;font-size:11px;">Port ${p.port}</span>`;
-                b.onclick = () => addScannedService(ip, p.port, p.label, p.icon);
-                quickGrid.appendChild(b);
+        function renderQuickAdd() {
+            const grid = document.getElementById('quick-add-grid');
+            if (!grid) return;
+            const ip = (currentMode === 'home' ? getConfig().homeIp : getConfig().publicIp) || '192.168.1.x';
+            grid.innerHTML = '';
+            quickAddServices.forEach(s => {
+                const btn = document.createElement('button');
+                btn.style.cssText = 'background:#1a1a1a;border:1px solid #333;border-radius:10px;padding:10px 6px;cursor:pointer;text-align:center;color:var(--text);font-size:12px;';
+                btn.innerHTML = `<span style="font-size:22px;display:block;margin-bottom:4px;">${s.icon}</span><strong>${s.label}</strong><br><span style="color:#888;font-size:10px;">:${s.port}</span>`;
+                btn.onclick = () => {
+                    const cfg = getConfig();
+                    const proto = (s.port === 443 || s.port === 8443) ? 'https' : 'http';
+                    cfg.services.push({ id: 'qa_' + Date.now(), name: s.label, url: `${proto}://${ip}:${s.port}`, icon: s.icon, color: s.color });
+                    saveConfig(cfg);
+                    renderSettingsServices();
+                    renderCards();
+                };
+                grid.appendChild(btn);
             });
-            resultsDiv.appendChild(quickGrid);
-        }
-
-        function cancelPortScan() {
-            if (scanAbortController) scanAbortController.abort();
-        }
-
-        function guessServiceName(port) {
-            const map = {
-                80:   { label: 'Webserver (HTTP)', icon: '🌐' },
-                443:  { label: 'Webserver (HTTPS)', icon: '🔒' },
-                3000: { label: 'Node.js / AdGuard', icon: '🛡️' },
-                5000: { label: 'Dev Server', icon: '🛠️' },
-                5055: { label: 'Overseerr', icon: '📋' },
-                6789: { label: 'NZBGet', icon: '📦' },
-                7878: { label: 'Radarr', icon: '🎥' },
-                8080: { label: 'Webserver Alt', icon: '🌐' },
-                8096: { label: 'Jellyfin', icon: '🎞️' },
-                8123: { label: 'Home Assistant', icon: '🏠' },
-                8181: { label: 'Service', icon: '🔌' },
-                8200: { label: 'Traefik', icon: '🔀' },
-                8443: { label: 'Secure Web', icon: '🔒' },
-                8920: { label: 'Emby', icon: '🎞️' },
-                8989: { label: 'Sonarr', icon: '📺' },
-                9000: { label: 'Service', icon: '🔌' },
-                9090: { label: 'Prometheus', icon: '📊' },
-                9091: { label: 'Transmission', icon: '⬇️' },
-                2342: { label: 'Grafana', icon: '📈' },
-                1880: { label: 'Node-RED', icon: '🔴' },
-                32400: { label: 'Plex', icon: '🎬' }
-            };
-            return map[port] || { label: `Port ${port}`, icon: '🔌' };
         }
 
         function addScannedService(ip, port, label, icon) {
             const cfg = getConfig();
-            const proto = port === 443 || port === 8443 ? 'https' : 'http';
-            const id = 'scan_' + Date.now();
-            const newSrv = { id, name: label, port, icon, color: '#ff9000', enabled: true, proto };
-            cfg.services.push(newSrv);
+            const proto = (port === 443 || port === 8443) ? 'https' : 'http';
+            cfg.services.push({ id: 'add_' + Date.now(), name: label, url: `${proto}://${ip}:${port}`, icon: icon, color: '#ff9000' });
             saveConfig(cfg);
-            // Update settings list
-            openSettings();
+            renderSettingsServices();
+            renderCards();
         }
 
         // ===== INIT =====
